@@ -39,4 +39,33 @@ private Edge fromEdge, toEdge;
         int toResult = this.toEdge.compareTo(o.toEdge);
         return fromResult + ( (fromResult == 0) ? 1 : 0 ) * toResult;
     }
+
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((fromEdge == null) ? 0 : fromEdge.hashCode());
+        result = prime * result + ((toEdge == null) ? 0 : toEdge.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        Traversal other = (Traversal) obj;
+        if (fromEdge == null)
+        {
+            if (other.fromEdge != null) return false;
+        } else if (!fromEdge.equals(other.fromEdge)) return false;
+        if (toEdge == null)
+        {
+            if (other.toEdge != null) return false;
+        } else if (!toEdge.equals(other.toEdge)) return false;
+        return true;
+    }
+    
 }
