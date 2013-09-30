@@ -1,206 +1,245 @@
 package org.sandag.abm.active;
 import java.util.*;
 
-public class Network <T extends Node, U extends Edge, V extends Traversal>
+public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
 {
-  
-    private List<T> nodes;
-    private List<U> edges;
-    private List<V> traversals;
+   
+    private Map<T,ArrayList<U>> succeedingEdges;
+    private Map<T,ArrayList<U>> preceedingEdges;
     
-    private Map<Integer,Integer> nodeIndex;
-    private Map<EdgeKey,Integer> edgeIndex;
-    private Map<TraversalKey,Integer> traversalIndex;
-    
-    private Map<Integer,ArrayList<Integer>> successorIndex;
-    private Map<Integer,ArrayList<Integer>> predecessorIndex;
+    private Map<U,ArrayList<V>> succeedingTraversals;
+    private Map<U,ArrayList<V>> preceedingTraversals;
     
     public Network()
     {
-        nodes = new ArrayList<T>();
-        edges = new ArrayList<U>();
-        traversals = new ArrayList<V>();
-        nodeIndex = new HashMap<Integer,Integer>();
-        edgeIndex = new HashMap<EdgeKey,Integer>();
-        traversalIndex = new HashMap<TraversalKey,Integer>();
-        successorIndex =  new HashMap<Integer,ArrayList<Integer>>();
-        predecessorIndex =  new HashMap<Integer,ArrayList<Integer>>();
+        succeedingEdges =  new LinkedHashMap<T,ArrayList<U>>();
+        preceedingEdges =  new LinkedHashMap<T,ArrayList<U>>();
+        succeedingTraversals =  new LinkedHashMap<U,ArrayList<V>>();
+        preceedingTraversals =  new LinkedHashMap<U,ArrayList<V>>();
     }
     
-    public T getNode(int nodeId)
+    public U getEdge(T fromNode, T toNode)
     {
-        return nodes.get(nodeIndex.get(nodeId));
-    }
-    
-    public U getEdge(int fromId, int toId)
-    {
-        return edges.get(edgeIndex.get(new EdgeKey(fromId,toId)));
-    }
-    
-    public V getTraversal(int startId, int thruId, int endId)
-    {
-        return traversals.get(traversalIndex.get(new TraversalKey(startId, thruId, endId)));
-    }
-    
-    public List<Integer> getSuccessorIds(int nodeId) {
-        return successorIndex.get(nodeId);
-    }
-    
-    public List<Integer> getPredecessorIds(int nodeId) {
-        return predecessorIndex.get(nodeId);
-    }
-    
-    public List<T> getSuccessors(int nodeId)
-    {
-        List<T> successors = new ArrayList<T>();
-        for ( int s : successorIndex.get(nodeId) ) {
-            successors.add(nodes.get(nodeIndex.get(s)));
+        for (U e : succeedingEdges.get(fromNode)) {
+            if ( e.getTo() == toNode ) { return e; }
         }
-        return successors;
+        throw new RuntimeException("fromNode and toNode do not form an edge");
     }
     
-    public List<T> getPredecessors(int nodeId)
+    public V getTraversal(U fromEdge, U toEdge)
     {
-        List<T> predecessors = new ArrayList<T>();
-        for ( int p : predecessorIndex.get(nodeId) ) {
-            predecessors.add(nodes.get(nodeIndex.get(p)));
+        for (V t : succeedingTraversals.get(fromEdge)) {
+            if ( t.getTo() == toEdge ) { return t; }
         }
-        return predecessors;
+        throw new RuntimeException("fromEdge and toEdge do not form a traversal");
     }
-    
+
     public Iterator<T> nodeIterator()
     {
-        return nodes.iterator();
+        return succeedingEdges.keySet().iterator();
+    }    
+    
+    private class SuccessorIterator implements Iterator<T>
+    {
+
+        Iterator<U> edgeIterator;
+        
+        public SuccessorIterator(T node)
+        {
+            edgeIterator = succeedingEdges.get(node).iterator();
+        }
+
+        public boolean hasNext()
+        {
+            return edgeIterator.hasNext();
+        }
+
+        public T next()
+        {
+            return (T) edgeIterator.next().getTo();
+        }
+
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
+ 
     }
     
+    private class PredecessorIterator implements Iterator<T>
+    {
+
+        Iterator<U> edgeIterator;
+        
+        public PredecessorIterator(T node)
+        {
+            edgeIterator = preceedingEdges.get(node).iterator();
+        }
+
+        public boolean hasNext()
+        {
+            return edgeIterator.hasNext();
+        }
+
+        public T next()
+        {
+            return (T) edgeIterator.next().getFrom();
+        }
+
+        public void remove()
+        {
+            throw new UnsupportedOperationException();
+        }
+ 
+    }
+    
+    public Iterator<T> successorIterator(T node)
+    {
+        return new SuccessorIterator(node);
+    }
+    
+    public Iterator<T> predecessorIterator(T node)
+    {
+        return new PredecessorIterator(node);
+    }
+    
+    public List<T> getSuccessors(T node) {
+        List<T> nodes = new ArrayList<T>();
+        Iterator<T> it = successorIterator(node);
+        while ( it.hasNext() ){
+            nodes.add(it.next());
+        }
+        return nodes;
+    }
+    
+    public List<T> getPredecessors(T node) {
+        List<T> nodes = new ArrayList<T>();
+        Iterator<T> it = predecessorIterator(node);
+        while ( it.hasNext() ){
+            nodes.add(it.next());
+        }
+        return nodes;
+    }
+ 
     public Iterator<U> edgeIterator()
     {
-        return edges.iterator();
+        return succeedingTraversals.keySet().iterator();
+    }
+
+    public class TraversalIterator implements Iterator<V>
+    {
+        Iterator<U> edgeIterator;
+        Iterator<V> succeedingTraversalIterator;
+        
+        TraversalIterator()
+        {
+            edgeIterator = edgeIterator();
+            if  ( edgeIterator.hasNext() ) {
+                succeedingTraversalIterator = succeedingTraversals.get(edgeIterator.next()).iterator();
+            }
+        }
+
+        public boolean hasNext()
+        {
+            return ( succeedingTraversalIterator.hasNext() || edgeIterator.hasNext() );
+        }
+
+        public V next()
+        {
+            if ( ! succeedingTraversalIterator.hasNext() ) { 
+                succeedingTraversalIterator = succeedingTraversals.get(edgeIterator.next()).iterator();
+            }
+            return succeedingTraversalIterator.next();
+        }
+
+        public void remove()
+        {
+            edgeIterator.remove();
+        }
+           
     }
     
     public Iterator<V> traversalIterator()
     {
-        return traversals.iterator();
+        return new TraversalIterator();
     }
+    
 
     public void addNode(T node)
     {
-        if ( nodeIndex.containsKey(node.getId()) ) {
-            throw new RuntimeException("Network already contains Node with id " + node.getId());
+        if ( succeedingEdges.containsKey(node) ) {
+            throw new IllegalStateException("Network already contains Node" + node.toString());
         }
-        nodeIndex.put(node.getId(), nodes.size());
-        nodes.add(node);
-        if (! successorIndex.containsKey(node.getId()) ) { successorIndex.put(node.getId(), new ArrayList<Integer>()); }
-        if (! predecessorIndex.containsKey(node.getId()) ) { predecessorIndex.put(node.getId(), new ArrayList<Integer>()); }
+        succeedingEdges.put(node, new ArrayList<U>());
+        preceedingEdges.put(node, new ArrayList<U>());
     }
     
     public void addEdge(U edge)
     {
-        int fromId = edge.getFromId();
-        int toId = edge.getToId();
-        EdgeKey edgeIndexKey = new EdgeKey(fromId, toId);
+        T fromNode = (T) edge.getFrom();
+        T toNode = (T) edge.getTo();
         
-        if ( edgeIndex.containsKey(edgeIndexKey) ) {
-            throw new RuntimeException("Network already contains Edge with fromId " + edge.getFromId() + " and toId " + edge.getToId());
+        if ( succeedingTraversals.containsKey(edge) ) {
+            throw new IllegalStateException("Network already contains Edge" + edge.toString());
+        } else {
+        
+            if ( ! succeedingEdges.containsKey(fromNode) ) { succeedingEdges.put(fromNode, new ArrayList<U>()); }
+            if ( ! preceedingEdges.containsKey(toNode) ) { preceedingEdges.put(toNode, new ArrayList<U>()); }
+            succeedingEdges.get(fromNode).add(edge);
+            preceedingEdges.get(toNode).add(edge);
         }
         
-        edgeIndex.put(edgeIndexKey, edges.size());
-        edges.add(edge);
-        
-        if ( ! successorIndex.containsKey(fromId) ) { successorIndex.put(fromId, new ArrayList<Integer>()); }
-        if ( ! predecessorIndex.containsKey(toId) ) { predecessorIndex.put(toId, new ArrayList<Integer>()); }
-        
-        if ( ! successorIndex.get(fromId).contains(toId) ) { successorIndex.get(fromId).add(toId); }
-        if ( ! predecessorIndex.get(toId).contains(fromId) ) { predecessorIndex.get(toId).add(fromId); }
+        succeedingTraversals.put(edge, new ArrayList<V>());
+        preceedingTraversals.put(edge, new ArrayList<V>());
+      
     }
     
     public void addTraversal(V traversal)
     {
-        int startId = traversal.getStartId();
-        int thruId = traversal.getThruId();
-        int endId = traversal.getEndId();
-        TraversalKey traversalIndexKey = new TraversalKey(startId, thruId, endId);
+        U fromEdge = (U) traversal.getFrom();
+        U toEdge = (U) traversal.getTo();
         
-        traversalIndex.put(traversalIndexKey, traversals.size());
-        traversals.add(traversal);
-    }
-    
-    public boolean containsNodeId(int id) {
-        return nodeIndex.containsKey(id);
-    }
-    
-    public boolean containsEdgeIds(int[] ids) {
-        return edgeIndex.containsKey(new EdgeKey(ids[0],ids[1]));
-    }
-    
-    public boolean containsTraversalIds(int[] ids) {
-        return traversalIndex.containsKey(new TraversalKey(ids[0],ids[1],ids[2]));
-    }
-    
-    private class EdgeKey {
-        private int fromId, toId;
+        if ( ! succeedingTraversals.containsKey(fromEdge) ) { succeedingTraversals.put(fromEdge, new ArrayList<V>()); }
+        if ( ! preceedingTraversals.containsKey(toEdge) ) { succeedingTraversals.put(toEdge, new ArrayList<V>()); }
         
-        EdgeKey(int fromId, int toId) {
-            this.fromId = fromId;
-            this.toId = toId;
+        if ( succeedingTraversals.get(fromEdge).contains(traversal) ) {
+            throw new IllegalStateException("Network already contains Traversal" + traversal.toString());
+        } else {
+            succeedingTraversals.get(fromEdge).add(traversal);
+            preceedingTraversals.get(toEdge).add(traversal);
         }
-
-        @Override
-        public int hashCode()
-        {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + fromId;
-            result = prime * result + toId;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (this == obj) return true;
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-            EdgeKey other = (EdgeKey) obj;
-            if (fromId != other.fromId) return false;
-            if (toId != other.toId) return false;
-            return true;
-        }        
     }
     
-    private class TraversalKey {
-        private int startId, thruId, endId;
-
-        public TraversalKey(int startId, int thruId, int endId)
-        {
-            this.startId = startId;
-            this.thruId = thruId;
-            this.endId = endId;
+    public boolean containsNode(T node) {
+        return succeedingEdges.containsKey(node);
+    }
+    
+    public boolean containsEdge(U edge) {
+        T fromNode = (T) edge.getFrom();
+        return succeedingEdges.get(fromNode).contains(edge);
+    }
+    
+    public boolean containsEdgeWithNodes(T fromNode, T toNode) {
+        for (U edge : succeedingEdges.get(fromNode) ) {
+            if ( toNode.equals(edge.getTo()) ) {
+                return true;
+            }
         }
-
-        @Override
-        public int hashCode()
-        {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + endId;
-            result = prime * result + startId;
-            result = prime * result + thruId;
-            return result;
+        return false;
+    }
+    
+    public boolean containsTraversal(V traversal) {
+        U fromEdge = (U) traversal.getFrom();
+        return succeedingTraversals.get(fromEdge).contains(traversal);
+    }
+    
+    public boolean containsTraversalWithEdges(U fromEdge, U toEdge) {
+        for (V traversal : succeedingTraversals.get(fromEdge) ) {
+            if ( toEdge.equals(traversal.getTo()) ) {
+                return true;
+            }
         }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (this == obj) return true;
-            if (obj == null) return false;
-            if (getClass() != obj.getClass()) return false;
-            TraversalKey other = (TraversalKey) obj;
-            if (endId != other.endId) return false;
-            if (startId != other.startId) return false;
-            if (thruId != other.thruId) return false;
-            return true;
-        }
+        return false;
     }
         
 }

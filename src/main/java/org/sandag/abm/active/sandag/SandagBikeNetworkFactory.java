@@ -10,6 +10,7 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
 {
     private Map<String,String> propertyMap;
     private PropertyParser propertyParser;
+    Map<Integer,SandagBikeNode> nodeIndex;
     
     private static final String PROPERTIES_NODE_FILE = "active.node.file";
     private static final String PROPERTIES_NODE_ID = "active.node.id";
@@ -31,10 +32,11 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
     
     public SandagBikeNetworkFactory(Map<String, String> propertyMap)
     {
-        super(SandagBikeNode.class, SandagBikeEdge.class, SandagBikeTraversal.class);
+        super();
         this.propertyMap = propertyMap;
         propertyParser = new PropertyParser(propertyMap);
         logger = Logger.getLogger(SandagBikeNetworkFactory.class);
+        nodeIndex = new HashMap<Integer,SandagBikeNode>();
     }
     
     protected void readNodes()
@@ -53,22 +55,28 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
             Object[] rowObjects;
             while ( ( rowObjects = reader.nextRecord() ) != null )  {             
                 int id = ((Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_NODE_ID))] ).intValue();
-                node = createDefaultNode(id);
+                node = new SandagBikeNode(id);
                 for (String fieldName : fieldMap.keySet()) {
                     try {
-                        f = nodeClass.getField(fieldName);
+                        f = SandagBikeNode.class.getField(fieldName);
                         setNumericFieldWithCast(node, f, (Number) rowObjects[labels.get(fieldMap.get(fieldName))]);
                      } catch (NoSuchFieldException | SecurityException e) {
                         logger.error( "Exception caught getting class field " + fieldName + " for object of class " + node.getClass().getName(), e);
                         throw new RuntimeException();
                      }
                 }
-                network.addNode(node);   
+                network.addNode(node);
+                nodeIndex.put(id, node);   
             }
         } catch  (IOException e) {
             logger.error( "Exception caught reading nodes from disk.", e);
             throw new RuntimeException();
         }    
+    }
+    
+    protected SandagBikeTraversal createTraversalFromEdges(SandagBikeEdge fromEdge, SandagBikeEdge toEdge)
+    {
+        return new SandagBikeTraversal(fromEdge, toEdge);
     }
     
     protected void readEdges()
@@ -89,44 +97,39 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
             }
             Object[] rowObjects;
             while ( ( rowObjects = reader.nextRecord() ) != null )  {             
-                int a = ((Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_ANODE))] ).intValue();
-                int b = ((Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_BNODE))] ).intValue();
+                SandagBikeNode aNode = nodeIndex.get( ( (Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_ANODE))] ).intValue() );
+                SandagBikeNode bNode = nodeIndex.get( ( (Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_BNODE))] ).intValue() );
                 
-                edge = createDefaultEdge(a, b);
+                edge = new SandagBikeEdge(aNode, bNode);
                 for (String fieldName : abFieldMap.keySet()) {
                     try {
-                        f = edgeClass.getField(fieldName);
+                        f = SandagBikeEdge.class.getField(fieldName);
                         setNumericFieldWithCast(edge, f, (Number) rowObjects[labels.get(abFieldMap.get(fieldName))]);
                     } catch (NoSuchFieldException | SecurityException e) {
                         logger.error( "Exception caught getting class field " + fieldName + " for object of class " + edge.getClass().getName(), e);
                         throw new RuntimeException();
                     }
                 }
-                addEdgeWithDefaultNodesAndTraversals(edge);
+                addEdgeWithConstructedTraversals(edge);
                 
                 if ( ! directional ){
-                    edge = createDefaultEdge(b, a);
+                    edge = new SandagBikeEdge(bNode, aNode);
                     for (String fieldName : baFieldMap.keySet()) {
                         try {
-                            f = edgeClass.getField(fieldName);
+                            f = SandagBikeEdge.class.getField(fieldName);
                             setNumericFieldWithCast(edge, f, (Number) rowObjects[labels.get(baFieldMap.get(fieldName))]);
                         } catch (NoSuchFieldException | SecurityException e) {
                             logger.error( "Exception caught getting class field " + fieldName + " for object of class " + edge.getClass().getName(), e);
                             throw new RuntimeException();
                         }
                     }            
-                    addEdgeWithDefaultNodesAndTraversals(edge);
+                    addEdgeWithConstructedTraversals(edge);
                 }                
             }
         } catch  (IOException e) {
             logger.error( "Exception caught reading edges from disk.", e);
             throw new RuntimeException();
         }
-    }
-    
-    protected void handleDefaultNodes()
-    {
-        if ( defaultNodeIds.size() > 0 ) { throw new RuntimeException("Edge data contain nodes missing from node file"); }
     }
     
     protected void calculateDerivedNodeAttributes()
@@ -146,7 +149,7 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
             Field f;
             
             edgeIterator = network.edgeIterator();
-            f = edgeClass.getField(propertyMap.get(PROPERTIES_EDGE_AUTOSPERMITTED_FIELD));
+            f = SandagBikeEdge.class.getField(propertyMap.get(PROPERTIES_EDGE_AUTOSPERMITTED_FIELD));
             SandagBikeEdge edge;
             while ( edgeIterator.hasNext() ) {
                 edge = edgeIterator.next();
@@ -154,7 +157,7 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
             }
             
             edgeIterator = network.edgeIterator();
-            f = edgeClass.getField(propertyMap.get(PROPERTIES_EDGE_CENTROID_FIELD));
+            f = SandagBikeEdge.class.getField(propertyMap.get(PROPERTIES_EDGE_CENTROID_FIELD));
             while ( edgeIterator.hasNext() ) {
                 edge = edgeIterator.next();
                 edge.centroidConnector = propertyParser.isIntValueInPropertyList(f.getInt(edge),PROPERTIES_EDGE_CENTROID_VALUE);
@@ -178,10 +181,10 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
     
     private double calculateTraversalAngle(SandagBikeTraversal t)
     {    
-        float xDiff1 = network.getNode(t.getThruId()).x - network.getNode(t.getStartId()).x;
-        float xDiff2 = network.getNode(t.getEndId()).x - network.getNode(t.getThruId()).x;
-        float yDiff1 = network.getNode(t.getThruId()).y - network.getNode(t.getStartId()).y;
-        float yDiff2 = network.getNode(t.getEndId()).y - network.getNode(t.getThruId()).y;
+        float xDiff1 = (t.getFrom().getTo()).x - (t.getFrom().getFrom()).x;
+        float xDiff2 = (t.getTo().getTo()).x - (t.getTo().getFrom()).x;
+        float yDiff1 = (t.getFrom().getTo()).y - (t.getFrom().getFrom()).y;
+        float yDiff2 = (t.getTo().getTo()).y - (t.getTo().getFrom()).y;
         
         double angle = Math.atan2(yDiff2, xDiff2) - Math.atan2(yDiff1, xDiff1);
         
@@ -197,15 +200,15 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
     
     private TurnType calculateTurnType(SandagBikeTraversal t)
     {        
-        int startId = t.getStartId();
-        int thruId = t.getThruId();
-        int endId = t.getEndId();
+        SandagBikeNode start = t.getFrom().getFrom();
+        SandagBikeNode thru = t.getFrom().getTo();
+        SandagBikeNode end = t.getTo().getTo();
         
-        if ( network.getNode(startId).centroid || network.getNode(thruId).centroid || network.getNode(endId).centroid ) {
+        if ( (start).centroid || (thru).centroid || (end).centroid ) {
             return TurnType.NONE;
         }
         
-        if ( startId == endId ) {
+        if ( start.equals(end) ) {
             return TurnType.REVERSAL;
         }
         
@@ -221,9 +224,10 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
         double currentAngle;
         int legCount = 1;
         
-        for (SandagBikeNode successor : network.getSuccessors(thruId) ) {
-            if ( network.getEdge(thruId, successor.getId()).autosPermitted && successor.getId() != startId ){
-                currentAngle = calculateTraversalAngle(network.getTraversal(startId, thruId, successor.getId()));
+        for (SandagBikeNode successor : network.getSuccessors(thru) ) {
+            SandagBikeEdge edge = network.getEdge(thru, successor);
+            if ( edge.autosPermitted && ! successor.equals(start) ){
+                currentAngle = calculateTraversalAngle(network.getTraversal(t.getFrom(),edge));
                 minAngle = Math.min(minAngle, currentAngle);
                 maxAngle = Math.max(maxAngle, currentAngle);
                 minAbsAngle = Math.min(minAbsAngle, Math.abs(currentAngle));
