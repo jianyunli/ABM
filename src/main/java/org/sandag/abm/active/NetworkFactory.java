@@ -1,86 +1,134 @@
 package org.sandag.abm.active;
-import java.util.*;
-import java.io.*;
-import com.pb.common.datafile.*;
-import org.apache.log4j.Logger;
-import org.sandag.abm.ctramp.HouseholdChoiceModelRunner;
 
-public class NetworkFactory
+import java.util.*;
+import org.apache.log4j.Logger;
+
+public abstract class NetworkFactory<T extends Node, U extends Edge, V extends Traversal>
 {
-    private Logger logger = Logger.getLogger(NetworkFactory.class);
-    private Network network;
-    private HashMap<String,String> propertyMap;
-    private static final String PROPERTIES_NODE_FILE = "active.node.file";
-    private static final String PROPERTIES_NODE_ID = "active.node.id";
-    private static final String PROPERTIES_NODE_XCOORD = "active.node.xcoord";
-    private static final String PROPERTIES_NODE_YCOORD = "active.node.ycoord";
-    private static final String PROPERTIES_EDGE_FILE = "active.edge.file";
-    private static final String PROPERTIES_EDGE_ANODE = "active.edge.anode";
-    private static final String PROPERTIES_EDGE_BNODE = "active.edge.bnode";
-    private static final String PROPERTIES_EDGE_DIRECTIONAL = "active.edge.directional";
-    private static final String PROPERTIES_EDGE_ATTRIBUTES_STORE = "active.edge.attributes.store";
-    private static final String PROPERTIES_EDGE_ATTRIBUTES_DISK_AB = "active.edge.attributes.disk.ab";
-    private static final String PROPERTIES_EDGE_ATTRIBUTES_DISK_BA = "active.edge.attributes.disk.ba";
-    private static final String PROPERTIES_EDGE_CENTROID_ATTRIBUTE = "active.edge.centroid.attribute";
-    private static final String PROPERTIES_EDGE_CENTROID_VALUES = "active.edge.centroid.value";
-    private static final String PROPERTIES_EDGE_AUTOSPERMITTED_ATTRIBUTE = "active.edge.autospermitted.attribute";
-    private static final String PROPERTIES_EDGE_AUTOSPERMITTED_VALUES = "active.edge.autospermitted.values";
+    protected Logger logger = Logger.getLogger(NetworkFactory.class);
+    protected Network<T,U,V> network;
+    protected Class<T> nodeClass;
+    protected Class<U> edgeClass;
+    protected Class<V> traversalClass;
     
-    public NetworkFactory(HashMap<String, String> propertyMap)
+    protected Set<Integer> defaultNodeIds;
+    protected Set<int[]> defaultTraversalIds;
+    
+    protected NetworkFactory(Class<T> nodeClass, Class<U> edgeClass, Class<V> traversalClass)
     {
-        this.propertyMap = propertyMap;
-        network = new Network();
+        network = new Network<T,U,V>();
+        this.nodeClass = nodeClass;
+        this.edgeClass = edgeClass;
+        this.traversalClass = traversalClass;
+        defaultNodeIds = new HashSet<Integer>();
+        defaultTraversalIds = new HashSet<int[]>();
     }
-    
-    public Network createNetwork()
+
+    public Network<T,U,V> create()
     {
-        network = new Network();
         readNodes();
         readEdges();
+        handleDefaultNodes();
+        calculateDerivedNodeAttributes();
+        calculateDerivedEdgeAttributes();
+        calculateDerivedTraversalAttributes();
         return network;
     }
     
-    private void readNodes()
+    public T createDefaultNode(int id)
     {
-        try{
-            TableDataSet data = (new DBFFileReader()).readFile(new File(propertyMap.get(PROPERTIES_NODE_FILE)));
-            HashMap<String,Number> attributes = new HashMap<String,Number>();
-            for (int row = 1; row <= data.getRowCount(); row = row+1 ){
-                for (String label : data.getColumnLabels()){
-                    attributes.put(label, data.getValueAt(row,label));
-                }
-                network.addNode((int) data.getValueAt(row, propertyMap.get(PROPERTIES_NODE_ID)), attributes);   
-            }
-        } catch  (IOException e){
-            logger.error( "Exception caught reading nodes from disk.", e);
-        }    
+        T newNode = null;
+        
+        try {
+            newNode = nodeClass.newInstance();
+            newNode.setId(id);
+        } catch (InstantiationException e) {
+            logger.error( "Exception caught instantiating default Node.", e);
+            throw new RuntimeException();
+        } catch (IllegalAccessException e) {
+            logger.error( "Exception caught instantiating default Node.", e);
+            throw new RuntimeException();
+        }
+        
+        return newNode;
     }
     
-    private void readEdges()
+    public U createDefaultEdge(int fromId, int toId)
     {
-        try{
-            TableDataSet data = (new DBFFileReader()).readFile(new File(propertyMap.get(PROPERTIES_EDGE_FILE)));
-            HashMap<String,Number> attributes = new HashMap<String,Number>();
-            List<String> storeLabels = Arrays.asList(propertyMap.get(PROPERTIES_EDGE_ATTRIBUTES_STORE.split("\\s*,\\s*")));
-            List<String> abLabels = Arrays.asList(propertyMap.get(PROPERTIES_EDGE_ATTRIBUTES_DISK_AB.split("\\s*,\\s*")));
-            List<String> baLabels = new ArrayList<String>();
-            boolean directional = Boolean.parseBoolean(propertyMap.get(PROPERTIES_EDGE_DIRECTIONAL));
-            if ( ! directional ) { baLabels = Arrays.asList(propertyMap.get(PROPERTIES_EDGE_ATTRIBUTES_DISK_BA.split("\\s*,\\s*"))); }
-            for (int row = 1; row <= data.getRowCount(); row = row+1 ){
-                for (int i = 0; i < storeLabels.size(); i = i+1 ){
-                    attributes.put(storeLabels.get(i), data.getValueAt(row,abLabels.get(i)));
-                }            
-                network.addEdge((int) data.getValueAt(row, propertyMap.get(PROPERTIES_EDGE_ANODE)), (int) data.getValueAt(row, propertyMap.get(PROPERTIES_EDGE_BNODE)), attributes);
-                if ( ! directional ){
-                    for (int i = 0; i < storeLabels.size(); i = i+1 ){
-                        attributes.put(storeLabels.get(i), data.getValueAt(row,baLabels.get(i)));
-                    }            
-                    network.addEdge((int) data.getValueAt(row, propertyMap.get(PROPERTIES_EDGE_BNODE)), (int) data.getValueAt(row, propertyMap.get(PROPERTIES_EDGE_ANODE)), attributes); 
-                }                
+        U newEdge = null;
+        
+        try {
+            newEdge = edgeClass.newInstance();
+            newEdge.setFromId(fromId);
+            newEdge.setToId(toId);
+        } catch (InstantiationException | IllegalAccessException e) {
+            logger.error( "Exception caught instantiating default Edge.", e);
+            throw new RuntimeException();
+        }
+        
+        return newEdge;
+    }
+    
+    public V createDefaultTraversal(int startId, int thruId, int endId)
+    {
+        V newTraversal = null;
+           
+        try {
+            newTraversal = traversalClass.newInstance();
+            newTraversal.setStartId(startId);
+            newTraversal.setThruId(thruId);
+            newTraversal.setEndId(endId);
+        } catch (InstantiationException | IllegalAccessException e) {
+            logger.error( "Exception caught instantiating default Traversal.", e);
+            throw new RuntimeException();
+        }
+           
+        return newTraversal;
+    }
+    
+    
+    public void addEdgeWithDefaultNodesAndTraversals(U edge)
+    {
+        network.addEdge(edge);
+        
+        int fromId = edge.getFromId();
+        int toId = edge.getToId();
+        
+        if ( ! network.containsNodeId(fromId) ) {
+            defaultNodeIds.add(fromId);
+            network.addNode(createDefaultNode(fromId));
+        }
+        if ( ! network.containsNodeId(toId) ) {
+            defaultNodeIds.add(toId);
+            network.addNode(createDefaultNode(toId));
+        }
+    
+        for (T successor : network.getSuccessors(toId)) {
+            int[] traversalIndexKey = new int[] {fromId, toId, successor.getId()};
+            if ( ! network.containsTraversalIds(traversalIndexKey) ) {
+                network.addTraversal(createDefaultTraversal(fromId, toId, successor.getId()));
+                defaultTraversalIds.add(traversalIndexKey);
             }
-        } catch  (IOException e){
-            logger.error( "Exception caught reading edges from disk.", e);
+        }
+        
+        for (T predecessor : network.getPredecessors(fromId)) {
+            int[] traversalIndexKey = new int[] {predecessor.getId(), fromId, toId};
+            if ( ! network.containsTraversalIds(traversalIndexKey) ) {
+                network.addTraversal(createDefaultTraversal(predecessor.getId(), fromId, toId));
+                defaultTraversalIds.add(traversalIndexKey);
+            }
         }
     }
-
+    
+    protected Iterator<Integer> defaultNodeIndexIterator()
+    {
+        return defaultNodeIds.iterator();
+    }
+    
+    protected abstract void readNodes();
+    protected abstract void readEdges();
+    protected abstract void handleDefaultNodes();
+    protected abstract void calculateDerivedNodeAttributes();
+    protected abstract void calculateDerivedEdgeAttributes();
+    protected abstract void calculateDerivedTraversalAttributes();
 }
