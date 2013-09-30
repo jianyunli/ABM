@@ -1,10 +1,9 @@
 package org.sandag.abm.active;
 
 import java.util.Collection;
-import java.util.Map;
 
-public interface ShortestPathResults extends Iterable<NodePair> {
+public interface ShortestPathResults<N extends Node> extends Iterable<NodePair<N>> {
 	int size();
-	ShortestPathResult getShortestPathResult(NodePair od);
-	Collection<ShortestPathResult> getResults();
+	ShortestPathResult<N> getShortestPathResult(NodePair<N> od);
+	Collection<ShortestPathResult<N>> getResults();
 }
