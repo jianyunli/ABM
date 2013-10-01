@@ -8,11 +8,11 @@ import java.util.Set;
 
 public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends Traversal<E>> implements ShortestPath<N> {
 	private final Network<N,E,T> network;
-	private final TraversalEvaluator<T> traversalEvaluator;
+	private final PathElementEvaluator<E,T> pathElementEvaluator;
 	
-	public DijkstraOOShortestPath(Network<N,E,T> network, TraversalEvaluator<T> traversalEvaluator) {
+	public DijkstraOOShortestPath(Network<N,E,T> network, PathElementEvaluator<E,T> traversalEvaluator) {
 		this.network = network;
-		this.traversalEvaluator = traversalEvaluator;
+		this.pathElementEvaluator = traversalEvaluator;
 	}
 	
 	private class TraversedEdge implements Comparable<TraversedEdge> {
@@ -27,7 +27,7 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 		}
 		
 		public int compareTo(TraversedEdge other) {
-			return (int) Math.signum(cost - other.cost);
+			return Double.compare(cost,other.cost);
 		}
 	}
 
@@ -44,8 +44,7 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 		return spResults;
 	}
 	
-	private ShortestPathResults<N> getShortestPaths(N originNode, Set<N> destinationNodes, double maxCost) {
-		//List<Node> orderedNodes = getOrderedNodeList();
+	protected ShortestPathResults<N> getShortestPaths(N originNode, Set<N> destinationNodes, double maxCost) {
 		Map<N,Path<N>> paths = new HashMap<>();         //zone node paths
 		Map<N,Double> costs = new HashMap<>();          //zone node costs
 		Map<E,Double> finalCosts = new HashMap<>();     //cost to (and including) edge
@@ -62,10 +61,10 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 		
 		//initialize traversalQueue and costs
 		for (N successor : network.getSuccessors(originNode)) {
-			T traversal = network.getNullTraversal(network.getEdge(originNode,successor));
-			double traversalCost = evaluateTraversal(traversal);
-			if (traversalCost <= maxCost) {
-				TraversedEdge traversedEdge = new TraversedEdge(traversal.getToEdge(),traversalCost,basePath.extendPath(successor));
+			E edge = network.getEdge(originNode,successor);
+			double edgeCost = pathElementEvaluator.evaluate(edge);
+			if (edgeCost < maxCost) {
+				TraversedEdge traversedEdge = new TraversedEdge(edge,edgeCost,basePath.extendPath(successor));
 				traversalQueue.add(traversedEdge);
 			}
 		}
@@ -81,19 +80,20 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 			double cost = traversedEdge.cost;
 			
 			finalCosts.put(edge,cost);
+			N fromNode = edge.getFromNode();
 			N toNode = edge.getToNode();
 			if (targets.remove(toNode)) {
 				paths.put(toNode,path);
 				costs.put(toNode,cost);
 			}
-			
+
 			for (N successor : network.getSuccessors(toNode)) {
+				if (successor.equals(fromNode))
+					continue; //no u-turns will be allowed, so don't pollute heap
 				T traversal = network.getTraversal(traversedEdge.edge,network.getEdge(toNode,successor));
-				double traversalCost = cost + evaluateTraversal(traversal);
-				if (traversalCost <= maxCost) {
-					traversedEdge = new TraversedEdge(traversal.getToEdge(),traversalCost,path.extendPath(successor));
-					traversalQueue.add(traversedEdge);
-				}
+				double traversalCost = cost + evaluateTraversalCost(traversal);
+				if (traversalCost < maxCost) 
+					traversalQueue.add(new TraversedEdge(traversal.getToEdge(),traversalCost,path.extendPath(successor)));
 			}
 		}
 		
@@ -104,12 +104,12 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 			double cost = pathDefined ? costs.get(destinationNode) : Double.POSITIVE_INFINITY;
 			spResults.addResult(new NodePair<N>(originNode,destinationNode),path,cost);
 		}
-		
+
 		return spResults;
 	}
 	
-	protected double evaluateTraversal(T traversal) {
-		return traversalEvaluator.evaluate(traversal);
+	protected double evaluateTraversalCost(T traversal) {
+		return pathElementEvaluator.evaluate(traversal.getToEdge()) + pathElementEvaluator.evaluate(traversal);
 	}
 
 }

@@ -12,11 +12,6 @@ public class SimpleTraversal<E extends Edge<?>> implements Traversal<E>
     	this.fromEdge = fromEdge;
     	this.toEdge = toEdge;
     }
-    
-    public SimpleTraversal(E edge)
-    {
-    	this(null,edge);
-    }
 
     @Override
     public E getFromEdge()

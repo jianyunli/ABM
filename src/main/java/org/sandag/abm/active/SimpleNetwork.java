@@ -63,12 +63,6 @@ public class SimpleNetwork<N extends Node,E extends Edge<N>,T extends Traversal<
     }
 
     @Override
-    public T getNullTraversal(E edge)
-    {
-        return getTraversal(null,edge);
-    }
-
-    @Override
     public Collection<N> getSuccessors(Node node)
     {
         return Collections.unmodifiableCollection(successors.get(node));
