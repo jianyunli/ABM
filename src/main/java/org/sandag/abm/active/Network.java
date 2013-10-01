@@ -1,50 +1,50 @@
 package org.sandag.abm.active;
 import java.util.*;
 
-public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
+public class Network <N extends Node, E extends Edge<N>, T extends Traversal<E>>
 {
    
-    private Map<T,ArrayList<U>> succeedingEdges;
-    private Map<T,ArrayList<U>> preceedingEdges;
+    private Map<N,ArrayList<E>> succeedingEdges;
+    private Map<N,ArrayList<E>> preceedingEdges;
     
-    private Map<U,ArrayList<V>> succeedingTraversals;
-    private Map<U,ArrayList<V>> preceedingTraversals;
+    private Map<E,ArrayList<T>> succeedingTraversals;
+    private Map<E,ArrayList<T>> preceedingTraversals;
     
     public Network()
     {
-        succeedingEdges =  new LinkedHashMap<T,ArrayList<U>>();
-        preceedingEdges =  new LinkedHashMap<T,ArrayList<U>>();
-        succeedingTraversals =  new LinkedHashMap<U,ArrayList<V>>();
-        preceedingTraversals =  new LinkedHashMap<U,ArrayList<V>>();
+        succeedingEdges =  new LinkedHashMap<N,ArrayList<E>>();
+        preceedingEdges =  new LinkedHashMap<N,ArrayList<E>>();
+        succeedingTraversals =  new LinkedHashMap<E,ArrayList<T>>();
+        preceedingTraversals =  new LinkedHashMap<E,ArrayList<T>>();
     }
     
-    public U getEdge(T fromNode, T toNode)
+    public E getEdge(N fromNode, N toNode)
     {
-        for (U e : succeedingEdges.get(fromNode)) {
-            if ( e.getTo() == toNode ) { return e; }
+        for (E e : succeedingEdges.get(fromNode)) {
+            if ( e.getToNode() == toNode ) { return e; }
         }
         throw new RuntimeException("fromNode and toNode do not form an edge");
     }
     
-    public V getTraversal(U fromEdge, U toEdge)
+    public T getTraversal(E fromEdge, E toEdge)
     {
-        for (V t : succeedingTraversals.get(fromEdge)) {
-            if ( t.getTo() == toEdge ) { return t; }
+        for (T t : succeedingTraversals.get(fromEdge)) {
+            if ( t.getToEdge() == toEdge ) { return t; }
         }
         throw new RuntimeException("fromEdge and toEdge do not form a traversal");
     }
 
-    public Iterator<T> nodeIterator()
+    public Iterator<N> nodeIterator()
     {
         return succeedingEdges.keySet().iterator();
     }    
     
-    private class SuccessorIterator implements Iterator<T>
+    private class SuccessorIterator implements Iterator<N>
     {
 
-        Iterator<U> edgeIterator;
+        Iterator<E> edgeIterator;
         
-        public SuccessorIterator(T node)
+        public SuccessorIterator(N node)
         {
             edgeIterator = succeedingEdges.get(node).iterator();
         }
@@ -54,9 +54,9 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
             return edgeIterator.hasNext();
         }
 
-        public T next()
+        public N next()
         {
-            return (T) edgeIterator.next().getTo();
+            return (N) edgeIterator.next().getToNode();
         }
 
         public void remove()
@@ -66,12 +66,12 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
  
     }
     
-    private class PredecessorIterator implements Iterator<T>
+    private class PredecessorIterator implements Iterator<N>
     {
 
-        Iterator<U> edgeIterator;
+        Iterator<E> edgeIterator;
         
-        public PredecessorIterator(T node)
+        public PredecessorIterator(N node)
         {
             edgeIterator = preceedingEdges.get(node).iterator();
         }
@@ -81,9 +81,9 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
             return edgeIterator.hasNext();
         }
 
-        public T next()
+        public N next()
         {
-            return (T) edgeIterator.next().getFrom();
+            return (N) edgeIterator.next().getFromNode();
         }
 
         public void remove()
@@ -93,43 +93,43 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
  
     }
     
-    public Iterator<T> successorIterator(T node)
+    public Iterator<N> successorIterator(N node)
     {
         return new SuccessorIterator(node);
     }
     
-    public Iterator<T> predecessorIterator(T node)
+    public Iterator<N> predecessorIterator(N node)
     {
         return new PredecessorIterator(node);
     }
     
-    public List<T> getSuccessors(T node) {
-        List<T> nodes = new ArrayList<T>();
-        Iterator<T> it = successorIterator(node);
+    public List<N> getSuccessors(N node) {
+        List<N> nodes = new ArrayList<N>();
+        Iterator<N> it = successorIterator(node);
         while ( it.hasNext() ){
             nodes.add(it.next());
         }
         return nodes;
     }
     
-    public List<T> getPredecessors(T node) {
-        List<T> nodes = new ArrayList<T>();
-        Iterator<T> it = predecessorIterator(node);
+    public List<N> getPredecessors(N node) {
+        List<N> nodes = new ArrayList<N>();
+        Iterator<N> it = predecessorIterator(node);
         while ( it.hasNext() ){
             nodes.add(it.next());
         }
         return nodes;
     }
  
-    public Iterator<U> edgeIterator()
+    public Iterator<E> edgeIterator()
     {
         return succeedingTraversals.keySet().iterator();
     }
 
-    public class TraversalIterator implements Iterator<V>
+    public class TraversalIterator implements Iterator<T>
     {
-        Iterator<U> edgeIterator;
-        Iterator<V> succeedingTraversalIterator;
+        Iterator<E> edgeIterator;
+        Iterator<T> succeedingTraversalIterator;
         
         TraversalIterator()
         {
@@ -144,7 +144,7 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
             return ( succeedingTraversalIterator.hasNext() || edgeIterator.hasNext() );
         }
 
-        public V next()
+        public T next()
         {
             if ( ! succeedingTraversalIterator.hasNext() ) { 
                 succeedingTraversalIterator = succeedingTraversals.get(edgeIterator.next()).iterator();
@@ -159,48 +159,48 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
            
     }
     
-    public Iterator<V> traversalIterator()
+    public Iterator<T> traversalIterator()
     {
         return new TraversalIterator();
     }
     
 
-    public void addNode(T node)
+    public void addNode(N node)
     {
         if ( succeedingEdges.containsKey(node) ) {
             throw new IllegalStateException("Network already contains Node" + node.toString());
         }
-        succeedingEdges.put(node, new ArrayList<U>());
-        preceedingEdges.put(node, new ArrayList<U>());
+        succeedingEdges.put(node, new ArrayList<E>());
+        preceedingEdges.put(node, new ArrayList<E>());
     }
     
-    public void addEdge(U edge)
+    public void addEdge(E edge)
     {
-        T fromNode = (T) edge.getFrom();
-        T toNode = (T) edge.getTo();
+        N fromNode = (N) edge.getFromNode();
+        N toNode = (N) edge.getToNode();
         
         if ( succeedingTraversals.containsKey(edge) ) {
             throw new IllegalStateException("Network already contains Edge" + edge.toString());
         } else {
         
-            if ( ! succeedingEdges.containsKey(fromNode) ) { succeedingEdges.put(fromNode, new ArrayList<U>()); }
-            if ( ! preceedingEdges.containsKey(toNode) ) { preceedingEdges.put(toNode, new ArrayList<U>()); }
+            if ( ! succeedingEdges.containsKey(fromNode) ) { succeedingEdges.put(fromNode, new ArrayList<E>()); }
+            if ( ! preceedingEdges.containsKey(toNode) ) { preceedingEdges.put(toNode, new ArrayList<E>()); }
             succeedingEdges.get(fromNode).add(edge);
             preceedingEdges.get(toNode).add(edge);
         }
         
-        succeedingTraversals.put(edge, new ArrayList<V>());
-        preceedingTraversals.put(edge, new ArrayList<V>());
+        succeedingTraversals.put(edge, new ArrayList<T>());
+        preceedingTraversals.put(edge, new ArrayList<T>());
       
     }
     
-    public void addTraversal(V traversal)
+    public void addTraversal(T traversal)
     {
-        U fromEdge = (U) traversal.getFrom();
-        U toEdge = (U) traversal.getTo();
+        E fromEdge = (E) traversal.getFromEdge();
+        E toEdge = (E) traversal.getToEdge();
         
-        if ( ! succeedingTraversals.containsKey(fromEdge) ) { succeedingTraversals.put(fromEdge, new ArrayList<V>()); }
-        if ( ! preceedingTraversals.containsKey(toEdge) ) { succeedingTraversals.put(toEdge, new ArrayList<V>()); }
+        if ( ! succeedingTraversals.containsKey(fromEdge) ) { succeedingTraversals.put(fromEdge, new ArrayList<T>()); }
+        if ( ! preceedingTraversals.containsKey(toEdge) ) { succeedingTraversals.put(toEdge, new ArrayList<T>()); }
         
         if ( succeedingTraversals.get(fromEdge).contains(traversal) ) {
             throw new IllegalStateException("Network already contains Traversal" + traversal.toString());
@@ -210,32 +210,32 @@ public class Network <T, U extends DirectionalPair, V extends DirectionalPair>
         }
     }
     
-    public boolean containsNode(T node) {
+    public boolean containsNode(N node) {
         return succeedingEdges.containsKey(node);
     }
     
-    public boolean containsEdge(U edge) {
-        T fromNode = (T) edge.getFrom();
+    public boolean containsEdge(E edge) {
+        N fromNode = (N) edge.getFromNode();
         return succeedingEdges.get(fromNode).contains(edge);
     }
     
-    public boolean containsEdgeWithNodes(T fromNode, T toNode) {
-        for (U edge : succeedingEdges.get(fromNode) ) {
-            if ( toNode.equals(edge.getTo()) ) {
+    public boolean containsEdgeWithNodes(N fromNode, N toNode) {
+        for (E edge : succeedingEdges.get(fromNode) ) {
+            if ( toNode.equals(edge.getToNode()) ) {
                 return true;
             }
         }
         return false;
     }
     
-    public boolean containsTraversal(V traversal) {
-        U fromEdge = (U) traversal.getFrom();
+    public boolean containsTraversal(T traversal) {
+        E fromEdge = (E) traversal.getFromEdge();
         return succeedingTraversals.get(fromEdge).contains(traversal);
     }
     
-    public boolean containsTraversalWithEdges(U fromEdge, U toEdge) {
-        for (V traversal : succeedingTraversals.get(fromEdge) ) {
-            if ( toEdge.equals(traversal.getTo()) ) {
+    public boolean containsTraversalWithEdges(E fromEdge, E toEdge) {
+        for (T traversal : succeedingTraversals.get(fromEdge) ) {
+            if ( toEdge.equals(traversal.getToEdge()) ) {
                 return true;
             }
         }

@@ -1,13 +1,24 @@
 package org.sandag.abm.active.sandag;
+import org.sandag.abm.active.Node;
 
-public class SandagBikeNode
+public class SandagBikeNode implements Node
 {
-    public final int id;
+    private int id;
     public float x=0 ,y=0;
     public short mgra=0 ,taz=0 ;
     public boolean signalized=false , centroid=false;
     
     public SandagBikeNode(int id)
+    {
+        this.id = id;
+    }
+    
+    public int getId()
+    {
+        return id;
+    }
+
+    public void setId(int id)
     {
         this.id = id;
     }

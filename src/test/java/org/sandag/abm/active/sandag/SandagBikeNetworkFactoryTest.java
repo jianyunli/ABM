@@ -32,7 +32,7 @@ public class SandagBikeNetworkFactoryTest
         SandagBikeEdge edge1, edge2;
         while (edgeIterator.hasNext()) {
             edge1 = edgeIterator.next();
-            edge2 = network.getEdge(edge1.getFrom(), edge1.getTo());
+            edge2 = network.getEdge(edge1.getFromNode(), edge1.getToNode());
             assertEquals(edge1, edge2);
         }
     }
@@ -44,7 +44,7 @@ public class SandagBikeNetworkFactoryTest
         SandagBikeTraversal traversal1, traversal2;
         while (traversalIterator.hasNext()) {
             traversal1 = traversalIterator.next();
-            traversal2 = network.getTraversal(traversal1.getFrom(), traversal1.getTo());
+            traversal2 = network.getTraversal(traversal1.getFromEdge(), traversal1.getToEdge());
             assertEquals(traversal1, traversal2);
         }
     }
@@ -82,8 +82,8 @@ public class SandagBikeNetworkFactoryTest
         while (edgeIterator.hasNext()) {
             edge = edgeIterator.next();
             int count = 0;
-            for (SandagBikeNode node : network.getSuccessors(edge.getFrom()) ) {
-                count = count + ( node.equals(edge.getTo()) ? 1 : 0);
+            for (SandagBikeNode node : network.getSuccessors(edge.getFromNode()) ) {
+                count = count + ( node.equals(edge.getToNode()) ? 1 : 0);
             }
             assertEquals(1,count);
         }
@@ -96,8 +96,8 @@ public class SandagBikeNetworkFactoryTest
         while (edgeIterator.hasNext()) {
             edge = edgeIterator.next();
             int count = 0;
-            for (SandagBikeNode node : network.getPredecessors(edge.getTo()) ) {
-                count = count + ( node.equals(edge.getFrom()) ? 1 : 0);
+            for (SandagBikeNode node : network.getPredecessors(edge.getToNode()) ) {
+                count = count + ( node.equals(edge.getFromNode()) ? 1 : 0);
             }
             assertEquals(1,count);
         }
@@ -109,8 +109,8 @@ public class SandagBikeNetworkFactoryTest
         SandagBikeEdge edge;
         while (edgeIterator.hasNext()) {
             edge = edgeIterator.next();
-            for (SandagBikeNode s : network.getSuccessors(edge.getTo()) ) {
-                assertTrue(network.containsTraversalWithEdges(edge,network.getEdge(edge.getTo(),s)));
+            for (SandagBikeNode s : network.getSuccessors(edge.getToNode()) ) {
+                assertTrue(network.containsTraversalWithEdges(edge,network.getEdge(edge.getToNode(),s)));
             }
         }
     }
@@ -121,8 +121,8 @@ public class SandagBikeNetworkFactoryTest
         SandagBikeEdge edge;
         while (edgeIterator.hasNext()) {
             edge = edgeIterator.next();
-            for (SandagBikeNode p : network.getPredecessors(edge.getFrom()) ) {
-                assertTrue(network.containsTraversalWithEdges(network.getEdge(p,edge.getFrom()),edge));
+            for (SandagBikeNode p : network.getPredecessors(edge.getFromNode()) ) {
+                assertTrue(network.containsTraversalWithEdges(network.getEdge(p,edge.getFromNode()),edge));
             }
         }
     }

@@ -1,7 +1,7 @@
 package org.sandag.abm.active.sandag;
 import org.sandag.abm.active.*;
 
-public class SandagBikeTraversal implements DirectionalPair
+public class SandagBikeTraversal implements Traversal<SandagBikeEdge>
 {
     private SandagBikeEdge from, to;
     
@@ -13,24 +13,14 @@ public class SandagBikeTraversal implements DirectionalPair
         this.to = toEdge;
     }
 
-    public SandagBikeEdge getFrom()
+    public SandagBikeEdge getFromEdge()
     {
         return from;
     }
 
-    public void setFrom(SandagBikeEdge from)
-    {
-        this.from = from;
-    }
-
-    public SandagBikeEdge getTo()
+    public SandagBikeEdge getToEdge()
     {
         return to;
-    }
-
-    public void setTo(SandagBikeEdge to)
-    {
-        this.to = to;
     }
 
     @Override

@@ -1,19 +1,18 @@
 package org.sandag.abm.active;
 
-import java.util.*;
 import org.apache.log4j.Logger;
 
-public abstract class NetworkFactory<T, U extends DirectionalPair, V extends DirectionalPair>
+public abstract class NetworkFactory<N extends Node, E extends Edge<N>, T extends Traversal<E>>
 {
     protected Logger logger = Logger.getLogger(NetworkFactory.class);
-    protected Network<T,U,V> network;
+    protected Network<N,E,T> network;
     
     protected NetworkFactory()
     {
-        network = new Network<T,U,V>();
+        network = new Network<N,E,T>();
     }
 
-    public Network<T,U,V> create()
+    public Network<N,E,T> create()
     {
         readNodes();
         readEdges();
@@ -23,22 +22,22 @@ public abstract class NetworkFactory<T, U extends DirectionalPair, V extends Dir
         return network;
     }
     
-    public void addEdgeWithConstructedTraversals(U edge)
+    public void addEdgeWithConstructedTraversals(E edge)
     {
         network.addEdge(edge);
         
-        T fromNode = (T) edge.getFrom();
-        T toNode = (T) edge.getTo();
+        N fromNode = (N) edge.getFromNode();
+        N toNode = (N) edge.getToNode();
     
-        for (T successor : network.getSuccessors(toNode)) {
-            U succeedingEdge = network.getEdge(toNode,successor);
+        for (N successor : network.getSuccessors(toNode)) {
+            E succeedingEdge = network.getEdge(toNode,successor);
             if ( ! network.containsTraversalWithEdges(edge,succeedingEdge) ) {
                 network.addTraversal(createTraversalFromEdges(edge,succeedingEdge));
             }
         }
         
-        for (T predecessor : network.getPredecessors(fromNode)) {
-            U preceedingEdge = network.getEdge(predecessor,fromNode);
+        for (N predecessor : network.getPredecessors(fromNode)) {
+            E preceedingEdge = network.getEdge(predecessor,fromNode);
             if ( ! network.containsTraversalWithEdges(preceedingEdge,edge) ) {
                 network.addTraversal(createTraversalFromEdges(preceedingEdge, edge));
             }
@@ -47,7 +46,7 @@ public abstract class NetworkFactory<T, U extends DirectionalPair, V extends Dir
     
     protected abstract void readNodes();
     protected abstract void readEdges();
-    protected abstract V createTraversalFromEdges(U fromEdge, U toEdge);
+    protected abstract T createTraversalFromEdges(E fromEdge, E toEdge);
     protected abstract void calculateDerivedNodeAttributes();
     protected abstract void calculateDerivedEdgeAttributes();
     protected abstract void calculateDerivedTraversalAttributes();

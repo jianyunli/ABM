@@ -1,7 +1,7 @@
 package org.sandag.abm.active.sandag;
 import org.sandag.abm.active.*;
 
-public class SandagBikeEdge implements DirectionalPair
+public class SandagBikeEdge implements Edge<SandagBikeNode>
 {
     private SandagBikeNode from, to;
     
@@ -16,21 +16,14 @@ public class SandagBikeEdge implements DirectionalPair
         this.to = toNode;
     }
     
-    public SandagBikeNode getFrom()
+    public SandagBikeNode getFromNode()
     {
         return from;
     }
-    public void setFrom(SandagBikeNode from)
-    {
-        this.from = from;
-    }
-    public SandagBikeNode getTo()
+
+    public SandagBikeNode getToNode()
     {
         return to;
-    }
-    public void setTo(SandagBikeNode to)
-    {
-        this.to = to;
     }
 
     @Override

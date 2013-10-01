@@ -181,10 +181,10 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
     
     private double calculateTraversalAngle(SandagBikeTraversal t)
     {    
-        float xDiff1 = (t.getFrom().getTo()).x - (t.getFrom().getFrom()).x;
-        float xDiff2 = (t.getTo().getTo()).x - (t.getTo().getFrom()).x;
-        float yDiff1 = (t.getFrom().getTo()).y - (t.getFrom().getFrom()).y;
-        float yDiff2 = (t.getTo().getTo()).y - (t.getTo().getFrom()).y;
+        float xDiff1 = (t.getFromEdge().getToNode()).x - (t.getFromEdge().getFromNode()).x;
+        float xDiff2 = (t.getToEdge().getToNode()).x - (t.getToEdge().getFromNode()).x;
+        float yDiff1 = (t.getFromEdge().getToNode()).y - (t.getFromEdge().getFromNode()).y;
+        float yDiff2 = (t.getToEdge().getToNode()).y - (t.getToEdge().getFromNode()).y;
         
         double angle = Math.atan2(yDiff2, xDiff2) - Math.atan2(yDiff1, xDiff1);
         
@@ -200,9 +200,9 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
     
     private TurnType calculateTurnType(SandagBikeTraversal t)
     {        
-        SandagBikeNode start = t.getFrom().getFrom();
-        SandagBikeNode thru = t.getFrom().getTo();
-        SandagBikeNode end = t.getTo().getTo();
+        SandagBikeNode start = t.getFromEdge().getFromNode();
+        SandagBikeNode thru = t.getFromEdge().getToNode();
+        SandagBikeNode end = t.getToEdge().getToNode();
         
         if ( (start).centroid || (thru).centroid || (end).centroid ) {
             return TurnType.NONE;
@@ -227,7 +227,7 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
         for (SandagBikeNode successor : network.getSuccessors(thru) ) {
             SandagBikeEdge edge = network.getEdge(thru, successor);
             if ( edge.autosPermitted && ! successor.equals(start) ){
-                currentAngle = calculateTraversalAngle(network.getTraversal(t.getFrom(),edge));
+                currentAngle = calculateTraversalAngle(network.getTraversal(t.getFromEdge(),edge));
                 minAngle = Math.min(minAngle, currentAngle);
                 maxAngle = Math.max(maxAngle, currentAngle);
                 minAbsAngle = Math.min(minAbsAngle, Math.abs(currentAngle));
