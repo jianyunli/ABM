@@ -25,12 +25,11 @@ import org.sandag.abm.active.ParallelShortestPath.ParallelMethod;
 
 import com.pb.sawdust.util.concurrent.DnCRecursiveAction;
 
-public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal<Edge<Node>>> {
+public class TestNetworkFactory extends AbstractNetworkFactory<Node,Edge<Node>,Traversal<Edge<Node>>> {
 	private final Set<Node> nodes;
 	private final Set<Node> centroids;
 	private final Set<Edge<Node>> edges;
 	private final Set<Traversal<Edge<Node>>> traversals;
-//	private final Map<Node,List<Node>> successors;
 	private final Map<Edge<Node>,Double> edgeCosts;
 	
 	public static enum TestNetworkType {
@@ -40,12 +39,10 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 	
 	public TestNetworkFactory(java.nio.file.Path file, TestNetworkType networkType, double sampleFraction) {
 		nodes = new TreeSet<>();
-//		successors = new HashMap<>();
 		centroids = new TreeSet<>();
 		edges = new HashSet<>();
 		traversals = new HashSet<>();
 		edgeCosts = new HashMap<>();
-		Map<Node,Set<Edge<Node>>> nexts = new HashMap<>();
 		
 		Map<Integer,Node> nodeSet = new HashMap<>();
 		switch (networkType) {
@@ -59,7 +56,6 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 							Node n = new SimpleNode(nodeId); 
 							nodeSet.put(nodeId,n);
 							nodes.add(n);
-							nexts.put(n,new HashSet<Edge<Node>>());
 							centroids.add(n);
 						}
 						Node f = nodeSet.get(nodeId);
@@ -76,7 +72,6 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 							Edge<Node> edge = new SimpleEdge<Node>(f,t);  
 							edges.add(edge);
 							edgeCosts.put(edge,cost);
-							nexts.get(f).add(edge);
 						}
 					}
 				} catch (IOException e) {
@@ -106,7 +101,6 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 							Node n = new SimpleNode(fromNode); 
 							nodeSet.put(fromNode,n);
 							nodes.add(n);
-							nexts.put(n,new HashSet<Edge<Node>>());
 							if (ftaz && (random.nextDouble() < sampleFraction)) 
 								centroids.add(n);
 						}
@@ -122,18 +116,11 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 						Edge<Node> edge = new SimpleEdge<Node>(f,t);
 						edges.add(edge);
 						edgeCosts.put(edge,cost);
-						nexts.get(f).add(edge);
 					}
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
-		}
-		for (Edge<Node> fromEdge : edges) {
-			Node n = fromEdge.getToNode();
-			traversals.add(new SimpleTraversal<Edge<Node>>(fromEdge));
-			for (Edge<Node> toEdge : nexts.get(n))
-				traversals.add(new SimpleTraversal<Edge<Node>>(fromEdge,toEdge));
 		}
 	}
 
@@ -150,6 +137,16 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 	@Override
 	protected Collection<Traversal<Edge<Node>>> getTraversals() {
 		return traversals;
+	}
+
+	@Override
+	protected Traversal<Edge<Node>> getTraversal(Edge<Node> edge) {
+		return new SimpleTraversal<Edge<Node>>(edge);
+	}
+
+	@Override
+	protected Traversal<Edge<Node>> getTraversal(Edge<Node> fromEdge, Edge<Node> toEdge) {
+		return new SimpleTraversal<Edge<Node>>(fromEdge,toEdge);
 	}
 	
 	@Override
@@ -200,8 +197,8 @@ public class TestNetworkFactory extends NetworkFactory<Node,Edge<Node>,Traversal
 		double sampleFraction = 0.01;
 		double maxCost = 30*5280;
 		System.out.print("reading network...");
-//		final NetworkInterface network = new TestNetwork(Paths.get("D:/projects/sandag/sp/dijkstraData.txt"),TestNetworkType.ADJACENCY_COST,sampleFraction);
-		TestNetworkFactory networkFactory = new TestNetworkFactory(Paths.get("D:/projects/sandag/sp/mtc_final_network.csv"),TestNetworkType.AB_COST,sampleFraction);
+		TestNetworkFactory networkFactory = new TestNetworkFactory(Paths.get("D:/projects/sandag/sp/dijkstraData.txt"),TestNetworkType.ADJACENCY_COST,sampleFraction);
+//		TestNetworkFactory networkFactory = new TestNetworkFactory(Paths.get("D:/projects/sandag/sp/mtc_final_network.csv"),TestNetworkType.AB_COST,sampleFraction);
 		final TestNetwork network = networkFactory.createNetwork();
 		System.out.println("done");
 		

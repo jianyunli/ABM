@@ -9,4 +9,8 @@ public class SandagBikeTraversal extends SimpleTraversal<SandagBikeEdge>
     public SandagBikeTraversal(SandagBikeEdge fromEdge, SandagBikeEdge toEdge) {
 		super(fromEdge, toEdge);
 	}
+	
+    public SandagBikeTraversal(SandagBikeEdge edge) {
+		super(null,edge);
+	}
 }

@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 
 import com.linuxense.javadbf.*;
 
-public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal>
+public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal>
 {
     protected Logger logger = Logger.getLogger(SandagBikeNetworkFactory.class);
     private Map<String,String> propertyMap;
@@ -281,7 +281,6 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
     	if (nodes == null) {
     		nodes = readNodes();
     		edges = readEdges(nodes);
-    		traversals = readTraversals();
     	}
     }
 
@@ -301,5 +300,15 @@ public class SandagBikeNetworkFactory extends NetworkFactory<SandagBikeNode,Sand
 	protected Collection<SandagBikeTraversal> getTraversals() {
 		loadNetworkData();
 		return traversals;
+	}
+
+	@Override
+	protected SandagBikeTraversal getTraversal(SandagBikeEdge edge) {
+		return new SandagBikeTraversal(edge);
+	}
+
+	@Override
+	protected SandagBikeTraversal getTraversal(SandagBikeEdge fromEdge, SandagBikeEdge toEdge) {
+		return new SandagBikeTraversal(fromEdge,toEdge);
 	}
 }

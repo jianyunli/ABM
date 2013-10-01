@@ -2,7 +2,7 @@ package org.sandag.abm.active;
 
 import java.util.*;
 
-public abstract class NetworkFactory<N extends Node, E extends Edge<N>, T extends Traversal<E>>
+public abstract class NetworkFactory<N extends Node,E extends Edge<N>,T extends Traversal<E>>
 {
 
     public Network<N,E,T> createNetwork()
@@ -21,4 +21,6 @@ public abstract class NetworkFactory<N extends Node, E extends Edge<N>, T extend
     protected void calculateDerivedNodeAttributes(Network<N,E,T> network) {}
     protected void calculateDerivedEdgeAttributes(Network<N,E,T> network) {}
     protected void calculateDerivedTraversalAttributes(Network<N,E,T> network) {}
+    
+    
 }
