@@ -73,6 +73,7 @@ public class DijkstraArrayShortestPath<N extends Node> implements ShortestPath<N
 		
 		Path[] paths = new Path[targetNodes.size()];
 		double[] costs = new double[targetNodes.size()];
+		Arrays.fill(costs,Double.POSITIVE_INFINITY);
 		double[] finalCosts = finalCostsContainer.get();
 		Arrays.fill(finalCosts,Double.POSITIVE_INFINITY);
 		Path[] tempPaths = tempPathsContainer.get();
@@ -146,6 +147,8 @@ public class DijkstraArrayShortestPath<N extends Node> implements ShortestPath<N
 		N originNode = (N) network.nodeIndices[nodeIndex];
 		for (N destinationNode : destinationNodes) {
 			int index = resultsIndices.get(destinationNode);
+			if (costs[index] >= maxCost)
+				continue;
 			spResults.addResult(new NodePair<N>(originNode,destinationNode),(Path<N>) paths[index],costs[index]);
 		}
 		
@@ -214,6 +217,8 @@ public class DijkstraArrayShortestPath<N extends Node> implements ShortestPath<N
 					for (int endIndex = fromNodeList[t]; endIndex < fromNodeList[t+1]; endIndex++) {
 						int e = toNodeList[endIndex];
 						nodePair = new NodePair<>((N) nodeIndices[t],(N) nodeIndices[e]);
+						if (nodeIndices[e].equals(nodeIndices[f]))
+							continue;
 						E toEdge = network.getEdge(nodePair);
 						traversals.add(new int[] {t,edgePositions.get(nodePair)});
 						costs.add(pathElementEvaluator.evaluate(toEdge) + pathElementEvaluator.evaluate(network.getTraversal(fromEdge,toEdge)));

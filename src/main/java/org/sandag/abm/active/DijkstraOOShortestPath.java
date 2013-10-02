@@ -100,6 +100,8 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 		BasicShortestPathResults<N> spResults = new BasicShortestPathResults<>();
 		for (N destinationNode : destinationNodes) {
 			boolean pathDefined = paths.containsKey(destinationNode);
+			if (!pathDefined) //test this out
+				continue;
 			Path<N> path = pathDefined ? paths.get(destinationNode) : null;
 			double cost = pathDefined ? costs.get(destinationNode) : Double.POSITIVE_INFINITY;
 			spResults.addResult(new NodePair<N>(originNode,destinationNode),path,cost);

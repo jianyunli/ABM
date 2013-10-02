@@ -1,5 +1,6 @@
 package org.sandag.abm.active.sandag;
 import org.sandag.abm.active.*;
+import org.sandag.abm.active.ParallelShortestPath.ParallelMethod;
 
 import java.util.*;
 import java.io.*;
@@ -44,7 +45,7 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
     
     protected Collection<SandagBikeNode> readNodes()
     {
-    	Set<SandagBikeNode> nodes = new LinkedHashSet<>();
+        Set<SandagBikeNode> nodes = new LinkedHashSet<>();
         try{
             InputStream stream = new FileInputStream(propertyMap.get(PROPERTIES_NODE_FILE));
             DBFReader reader = new DBFReader(stream);
@@ -79,11 +80,11 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
     
     protected Collection<SandagBikeEdge> readEdges(Collection<SandagBikeNode> nodes)
     {
-    	Set<SandagBikeEdge> edges = new LinkedHashSet<>();
-    	Map<Integer,SandagBikeNode> idNodeMap = new HashMap<>();
-    	for (SandagBikeNode node : nodes)
-    		idNodeMap.put(node.getId(),node);
-    	
+        Set<SandagBikeEdge> edges = new LinkedHashSet<>();
+        Map<Integer,SandagBikeNode> idNodeMap = new HashMap<>();
+        for (SandagBikeNode node : nodes)
+            idNodeMap.put(node.getId(),node);
+        
         try {
             InputStream stream = new FileInputStream(propertyMap.get(PROPERTIES_EDGE_FILE));
             DBFReader reader = new DBFReader(stream);
@@ -98,7 +99,7 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
             }
             Object[] rowObjects;
             while ( ( rowObjects = reader.nextRecord() ) != null )  {             
-            	SandagBikeNode a = idNodeMap.get(((Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_ANODE))] ).intValue());
+                SandagBikeNode a = idNodeMap.get(((Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_ANODE))] ).intValue());
                 SandagBikeNode b =  idNodeMap.get(((Number) rowObjects[labels.get(propertyMap.get(PROPERTIES_EDGE_BNODE))] ).intValue());
                 
                 SandagBikeEdge  edge = new SandagBikeEdge(a,b);
@@ -139,7 +140,7 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
     {
         Iterator<SandagBikeNode> nodeIterator = network.nodeIterator();
         while ( nodeIterator.hasNext() ) {
-        	SandagBikeNode n = nodeIterator.next();
+            SandagBikeNode n = nodeIterator.next();
             n.centroid = ( n.mgra > 0 ) || ( n.taz > 0 );
         }
     }
@@ -152,7 +153,7 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
             Field apf = SandagBikeEdge.class.getField(propertyMap.get(PROPERTIES_EDGE_AUTOSPERMITTED_FIELD));
             Field cf = SandagBikeEdge.class.getField(propertyMap.get(PROPERTIES_EDGE_CENTROID_FIELD));
             while ( edgeIterator.hasNext() ) {
-            	SandagBikeEdge edge = edgeIterator.next();
+                SandagBikeEdge edge = edgeIterator.next();
                 edge.autosPermitted = propertyParser.isIntValueInPropertyList(apf.getInt(edge),PROPERTIES_EDGE_AUTOSPERMITTED_VALUES);
                 edge.centroidConnector = propertyParser.isIntValueInPropertyList(cf.getInt(edge),PROPERTIES_EDGE_CENTROID_VALUE);
             }
@@ -168,16 +169,16 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
     {     
         Iterator<SandagBikeTraversal> traversalIterator = network.traversalIterator();
         while ( traversalIterator.hasNext() ) {
-        	SandagBikeTraversal t = traversalIterator.next();
+            SandagBikeTraversal t = traversalIterator.next();
             t.turnType = calculateTurnType(t,network);
         }
     }
     
     private double calculateTraversalAngle(SandagBikeTraversal t)
     {    
-    	float xDiff1 = t.getFromEdge().getToNode().x - t.getFromEdge().getFromNode().x;
+        float xDiff1 = t.getFromEdge().getToNode().x - t.getFromEdge().getFromNode().x;
         float xDiff2 = t.getToEdge().getToNode().x - t.getToEdge().getFromNode().x;
-    	float yDiff1 = t.getFromEdge().getToNode().y - t.getFromEdge().getFromNode().y;
+        float yDiff1 = t.getFromEdge().getToNode().y - t.getFromEdge().getFromNode().y;
         float yDiff2 = t.getToEdge().getToNode().y - t.getToEdge().getFromNode().y;
         
         double angle = Math.atan2(yDiff2, xDiff2) - Math.atan2(yDiff1, xDiff1);
@@ -194,9 +195,9 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
     
     private TurnType calculateTurnType(SandagBikeTraversal t, Network<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal> network)
     {        
-    	SandagBikeNode startNode = t.getFromEdge().getFromNode();
-    	SandagBikeNode thruNode = t.getFromEdge().getToNode();
-    	SandagBikeNode endNode = t.getToEdge().getToNode();
+        SandagBikeNode startNode = t.getFromEdge().getFromNode();
+        SandagBikeNode thruNode = t.getFromEdge().getToNode();
+        SandagBikeNode endNode = t.getToEdge().getToNode();
         
         if (startNode.centroid || thruNode.centroid || endNode.centroid ) {
             return TurnType.NONE;
@@ -220,7 +221,7 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
         
         SandagBikeEdge startEdge = network.getEdge(startNode,thruNode);
         for (SandagBikeNode successor : network.getSuccessors(thruNode) ) {
-        	SandagBikeEdge edge = network.getEdge(thruNode,successor);
+            SandagBikeEdge edge = network.getEdge(thruNode,successor);
             if (edge.autosPermitted && (!(successor.equals(startNode)))) {
                 currentAngle = calculateTraversalAngle(network.getTraversal(startEdge,edge));
                 minAngle = Math.min(minAngle, currentAngle);
@@ -278,26 +279,80 @@ public class SandagBikeNetworkFactory extends AbstractNetworkFactory<SandagBikeN
     }
     
     private void loadNetworkData() {
-    	if (nodes == null) {
-    		nodes = readNodes();
-    		edges = readEdges(nodes);
-    	}
+        if (nodes == null) {
+            nodes = readNodes();
+            edges = readEdges(nodes);
+        }
     }
 
-	@Override
-	protected Collection<SandagBikeNode> getNodes() {
-		loadNetworkData();
-		return nodes;
-	}
+    @Override
+    protected Collection<SandagBikeNode> getNodes() {
+        loadNetworkData();
+        return nodes;
+    }
 
-	@Override
-	protected Collection<SandagBikeEdge> getEdges() {
-		loadNetworkData();
-		return edges;
-	}
+    @Override
+    protected Collection<SandagBikeEdge> getEdges() {
+        loadNetworkData();
+        return edges;
+    }
 
-	@Override
-	protected SandagBikeTraversal getTraversal(SandagBikeEdge fromEdge, SandagBikeEdge toEdge) {
-		return new SandagBikeTraversal(fromEdge,toEdge);
-	}
+    @Override
+    protected SandagBikeTraversal getTraversal(SandagBikeEdge fromEdge, SandagBikeEdge toEdge) {
+        return new SandagBikeTraversal(fromEdge,toEdge);
+    }
+    
+    public static void main(String ... args) 
+    {
+        ResourceBundle rb = ResourceBundle.getBundle("sandag_abm_active_test");
+        HashMap<String,String> propertyMap = new HashMap<String,String>();
+        Enumeration<String> keys = rb.getKeys();
+        while (keys.hasMoreElements()) {
+            String key = keys.nextElement();
+            propertyMap.put(key, rb.getString(key));
+        }
+        NetworkFactory<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal> factory = new SandagBikeNetworkFactory(propertyMap);
+        Network<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal> network = factory.createNetwork();
+
+        final Set<SandagBikeNode> centroids = new LinkedHashSet<>();
+        Iterator<SandagBikeNode> nodeIterator = network.nodeIterator();
+        while (nodeIterator.hasNext()) {
+        	SandagBikeNode node = nodeIterator.next();
+//        	if (node.taz > 0)  
+        	if (node.mgra > 0)  
+        		centroids.add(node);
+        }
+        PathElementEvaluator<SandagBikeEdge,SandagBikeTraversal> pathElementEvaluator = new PathElementEvaluator<SandagBikeEdge,SandagBikeTraversal>() {
+	        
+	        @Override
+	        public double evaluate(SandagBikeTraversal traversal) {
+	            SandagBikeEdge fromEdge = traversal.getFromEdge();
+	            if (centroids.contains(fromEdge.getToNode()))
+	                return Double.POSITIVE_INFINITY;
+	            return 0;
+	        }
+	        
+	        @Override
+	        public double evaluate(SandagBikeEdge edge) {
+	            return edge.distance;
+	        }
+        };
+        
+        double maxCost = 1*5280;
+        long time = System.currentTimeMillis();
+        ShortestPath<SandagBikeNode> sp = null;
+//        sp = new DijkstraArrayShortestPath<SandagBikeNode>(network,pathElementEvaluator);
+        sp = new DijkstraOOShortestPath<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal>(network,pathElementEvaluator);
+//        sp = new DijkstraOOCacheShortestPath<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal>(network,pathElementEvaluator);
+
+        Set<SandagBikeNode> originNodes = new LinkedHashSet<>(centroids);
+        System.out.println("origins to process: " + originNodes.size());
+//            ShortestPath psp = new ParallelShortestPath(sp,ParallelMethod.FORK_JOIN);
+        ShortestPath<SandagBikeNode> psp = new ParallelShortestPath<SandagBikeNode>(sp,ParallelMethod.QUEUE);
+        ShortestPathResults<SandagBikeNode> spResults = psp.getShortestPaths(originNodes,originNodes,maxCost);
+        
+        
+        System.out.println("Time to run: " + (((double) (System.currentTimeMillis() - time)) / 1000));
+        System.out.println("result count: " + spResults.size());
+    }
 }
