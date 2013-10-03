@@ -100,8 +100,8 @@ public class TestNetworkFactory extends AbstractNetworkFactory<Node,Edge<Node>,T
 							Node n = new SimpleNode(fromNode); 
 							nodeSet.put(fromNode,n);
 							nodes.add(n);
-							//if (ftaz && (random.nextDouble() < sampleFraction)) 
-							if (fmaz && (random.nextDouble() < sampleFraction))
+							if (ftaz && (random.nextDouble() < sampleFraction)) 
+//							if (fmaz && (random.nextDouble() < sampleFraction))
 								centroids.add(n);
 						}
 						Node f = nodeSet.get(fromNode);
@@ -109,8 +109,8 @@ public class TestNetworkFactory extends AbstractNetworkFactory<Node,Edge<Node>,T
 							Node n = new SimpleNode(toNode); 
 							nodeSet.put(toNode,n);
 							nodes.add(n);
-							//if (ttaz && (random.nextDouble() < sampleFraction))
-							if (tmaz && (random.nextDouble() < sampleFraction))
+							if (ttaz && (random.nextDouble() < sampleFraction))
+//							if (tmaz && (random.nextDouble() < sampleFraction))
 								centroids.add(n);
 						}
 						Node t = nodeSet.get(toNode);
@@ -187,8 +187,8 @@ public class TestNetworkFactory extends AbstractNetworkFactory<Node,Edge<Node>,T
 	
 	public static void main(String ... args) {
 		double sampleFraction = 0.25;
-		//double maxCost = 30*5280;
-		double maxCost = 3*5280;
+		double maxCost = 30*5280;
+//		double maxCost = 3*5280;
 //		maxCost = Double.POSITIVE_INFINITY;
 		System.out.print("reading network...");
 //		TestNetworkFactory networkFactory = new TestNetworkFactory(Paths.get("D:/projects/sandag/sp/dijkstraData.txt"),TestNetworkType.ADJACENCY_COST,sampleFraction);

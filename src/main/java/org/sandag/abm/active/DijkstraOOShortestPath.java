@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends Traversal<E>> implements ShortestPath<N> {
+public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends Traversal<E>> extends AbstractShortestPath<N> {
 	private final Network<N,E,T> network;
 	private final PathElementEvaluator<E,T> pathElementEvaluator;
 	
@@ -32,15 +32,10 @@ public class DijkstraOOShortestPath<N extends Node,E extends Edge<N>,T extends T
 	}
 
 	@Override
-	public ShortestPathResults<N> getShortestPaths(Set<N> originNodes, Set<N> destinationNodes) {
-		return getShortestPaths(originNodes,destinationNodes,Double.POSITIVE_INFINITY);
-	}
-
-	@Override
-	public ShortestPathResults<N> getShortestPaths(Set<N> originNodes, Set<N> destinationNodes, double maxCost) {
+	public ShortestPathResults<N> getShortestPaths(Map<N, Set<N>> originsDestinations, double maxCost) {
 		ShortestPathResultsContainer<N> spResults = new BasicShortestPathResults<>();
-		for (N originNode : originNodes)
-			spResults.addAll(getShortestPaths(originNode,destinationNodes,maxCost));
+		for (N originNode : originsDestinations.keySet())
+			spResults.addAll(getShortestPaths(originNode,originsDestinations.get(originNode),maxCost));
 		return spResults;
 	}
 	

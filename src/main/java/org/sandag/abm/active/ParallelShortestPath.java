@@ -1,6 +1,8 @@
 package org.sandag.abm.active;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -12,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.pb.sawdust.util.concurrent.DnCRecursiveTask;
 
-public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
+public class ParallelShortestPath<N extends Node> extends AbstractShortestPath<N> {
 	private final ShortestPath<N> sp;
 	private final ParallelMethod method;
 	
@@ -26,11 +28,12 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 		QUEUE
 	}
 
+
 	@Override
-	public ShortestPathResults<N> getShortestPaths(Set<N> originNodes, Set<N> destinationNodes, double maxCost) {
+	public ShortestPathResults<N> getShortestPaths(Map<N, Set<N>> originsDestinations, double maxCost) {
 		switch (method) {
 			case FORK_JOIN : {
-				ShortestPathRecursiveTask task = new ShortestPathRecursiveTask(sp,originNodes,destinationNodes,maxCost);
+				ShortestPathRecursiveTask task = new ShortestPathRecursiveTask(sp,originsDestinations,maxCost);
 				new ForkJoinPool().execute(task);
 				ShortestPathResultsContainer<N> sprc = task.getResult();
 				return sprc;
@@ -39,7 +42,7 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 				int threadCount = Runtime.getRuntime().availableProcessors();
 				ExecutorService executor = Executors.newFixedThreadPool(threadCount);
 				final Queue<ShortestPathResultsContainer<N>> sprcQueue = new ConcurrentLinkedQueue<>();
-				final Queue<N> originNodeQueue = new ConcurrentLinkedQueue<>(originNodes);
+				final Queue<N> originNodeQueue = new ConcurrentLinkedQueue<>(originsDestinations.keySet());
 				ThreadLocal<ShortestPathResultsContainer<N>> sprcThreadLocal = new ThreadLocal<ShortestPathResultsContainer<N>>() {
 					@Override
 					public ShortestPathResultsContainer<N> initialValue() {
@@ -51,7 +54,7 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 				final CountDownLatch latch = new CountDownLatch(threadCount);
 				final AtomicInteger counter = new AtomicInteger();
 				for (int i = 0; i < threadCount; i++)
-					executor.execute(new QueueMethodTask(sp,originNodeQueue,destinationNodes,maxCost,counter,sprcThreadLocal,latch));
+					executor.execute(new QueueMethodTask(sp,originNodeQueue,originsDestinations,maxCost,counter,sprcThreadLocal,latch));
 				try {
 					latch.await();
 				} catch (InterruptedException e) {
@@ -80,15 +83,15 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 	private class QueueMethodTask implements Runnable {
 		private final ShortestPath<N> sp;
 		private final Queue<N> originNodes;
-		private final Set<N> destinationNodes;
+		private final Map<N,Set<N>> originsDestinations;
 		private final double maxCost;
 		private final AtomicInteger counter;
 		private final ThreadLocal<ShortestPathResultsContainer<N>> spr;
 		private final CountDownLatch latch;
 		
-		private QueueMethodTask(ShortestPath<N> sp, Queue<N> originNodes, Set<N> destinationNodes, double maxCost, AtomicInteger counter, ThreadLocal<ShortestPathResultsContainer<N>> spr, CountDownLatch latch) {
+		private QueueMethodTask(ShortestPath<N> sp, Queue<N> originNodes, Map<N,Set<N>> originsDestinations, double maxCost, AtomicInteger counter, ThreadLocal<ShortestPathResultsContainer<N>> spr, CountDownLatch latch) {
 			this.sp = sp;
-			this.destinationNodes = destinationNodes;
+			this.originsDestinations = originsDestinations;
 			this.originNodes = originNodes;
 			this.maxCost = maxCost;
 			this.counter = counter;
@@ -99,23 +102,23 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 		@Override
 		public void run() {
 			int segmentSize = 5;
-			final Set<N> origins = new HashSet<>();
+			final Map<N,Set<N>> threadOriginDestinations = new HashMap<>();
 			while (originNodes.size() > 0) {
-				while ((originNodes.size() > 0) && (origins.size() < segmentSize)) {
+				while ((originNodes.size() > 0) && (threadOriginDestinations.size() < segmentSize)) {
 					N origin = originNodes.poll();
 					if (origin != null)
-						origins.add(origin);
+						threadOriginDestinations.put(origin,originsDestinations.get(origin));
 				}
-				if (origins.size() == 0)
+				if (threadOriginDestinations.size() == 0)
 					break;
-				ShortestPathResults<N> result = sp.getShortestPaths(origins,destinationNodes,maxCost);
+				ShortestPathResults<N> result = sp.getShortestPaths(threadOriginDestinations,maxCost);
 				ShortestPathResultsContainer<N> sprc = spr.get();
 				for (ShortestPathResult<N> spResult : result.getResults()) 
 					sprc.addResult(spResult);
-				int c = counter.addAndGet(origins.size()); 
-				if (c % segmentSize < origins.size())
+				int c = counter.addAndGet(threadOriginDestinations.size()); 
+				if (c % segmentSize < threadOriginDestinations.size())
 					System.out.println("   done with " + ((c / segmentSize)*segmentSize) + " origins");
-				origins.clear();
+				threadOriginDestinations.clear();
 			}
 			latch.countDown();
 		}
@@ -125,25 +128,25 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 	private class ShortestPathRecursiveTask extends DnCRecursiveTask<ShortestPathResultsContainer<N>> {
 		AtomicInteger counter;
 		private final ShortestPath<N> sp;
-		private final Set<N> destinations;
+		private final Map<N,Set<N>> originsDestinations;
 		private final Node[] origins;
 		private final double maxCost;
 
-		protected ShortestPathRecursiveTask(ShortestPath<N> sp, Set<N> origins, Set<N> destinations, double maxCost) {
-			super(0,origins.size());
+		protected ShortestPathRecursiveTask(ShortestPath<N> sp, Map<N,Set<N>> originsDestinations, double maxCost) {
+			super(0,originsDestinations.size());
 			this.sp = sp;
-			this.origins = origins.toArray(new Node[origins.size()]);
-			this.destinations = destinations;
+			this.origins = originsDestinations.keySet().toArray(new Node[originsDestinations.size()]);
+			this.originsDestinations = originsDestinations;
 			this.maxCost = maxCost;
 			counter = new AtomicInteger(0);
 		}
 
 		protected ShortestPathRecursiveTask(long start, long length, DnCRecursiveTask<ShortestPathResultsContainer<N>> next,
-				                            ShortestPath<N> sp, Node[] origins, Set<N> destinations, double maxCost, AtomicInteger counter) {
+				                            ShortestPath<N> sp, Node[] origins, Map<N,Set<N>> originsDestinations, double maxCost, AtomicInteger counter) {
 			super(start,length,next);
 			this.sp = sp;
 			this.origins = origins;
-			this.destinations = destinations;
+			this.originsDestinations = originsDestinations;
 			this.maxCost = maxCost;
 			this.counter = counter;
 		}
@@ -151,11 +154,13 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 		@Override
 		@SuppressWarnings("unchecked") //origins only hold N, we just can't declare as such because of generics
 		protected ShortestPathResultsContainer<N> computeTask(long start, long length) {
-			Set<N> originNodes = new HashSet<>();
+			Map<N,Set<N>> taskOriginsDestinations = new HashMap<>();
 			int end = (int) (start + length);
-			for (int n = (int) start; n < end; n++) 
-				originNodes.add((N) origins[n]);
-			ShortestPathResults<N> result = sp.getShortestPaths(originNodes,destinations);
+			for (int n = (int) start; n < end; n++) {
+				N originNode = (N) origins[n];
+				taskOriginsDestinations.put(originNode,originsDestinations.get(originNode));
+			}
+			ShortestPathResults<N> result = sp.getShortestPaths(taskOriginsDestinations);
 			ShortestPathResultsContainer<N> spr = new BasicShortestPathResults<>();
 			for (ShortestPathResult<N> spResult : result.getResults()) 
 				spr.addResult(spResult);
@@ -173,7 +178,7 @@ public class ParallelShortestPath<N extends Node> implements ShortestPath<N> {
 
 		@Override
 		protected DnCRecursiveTask<ShortestPathResultsContainer<N>> getNextTask(long start, long length, DnCRecursiveTask<ShortestPathResultsContainer<N>> next) {
-			return new ShortestPathRecursiveTask(start,length,next,sp,origins,destinations,maxCost,counter);
+			return new ShortestPathRecursiveTask(start,length,next,sp,origins,originsDestinations,maxCost,counter);
 		}
 
 		@Override
