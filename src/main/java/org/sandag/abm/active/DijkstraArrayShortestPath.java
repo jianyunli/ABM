@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 
 @SuppressWarnings("rawtypes") //ignore all of the Path[] arrays because we can't instantiate generic arrays
-public class DijkstraArrayShortestPath<N extends Node> implements ShortestPath<N> {
+public class DijkstraArrayShortestPath<N extends Node> extends AbstractShortestPath<N> {
 	private final AdjacencyNetwork network;
 	
 	public <E extends Edge<N>,T extends Traversal<E>> DijkstraArrayShortestPath(Network<N,E,T> network, PathElementEvaluator<E,T> traversalEvaluator) {
@@ -23,17 +23,12 @@ public class DijkstraArrayShortestPath<N extends Node> implements ShortestPath<N
 	}
 
 	@Override
-	public ShortestPathResults<N> getShortestPaths(Set<N> originNodes, Set<N> destinationNodes) {
-		return getShortestPaths(originNodes,destinationNodes,Double.POSITIVE_INFINITY);
-	}
-
-	@Override
-	public ShortestPathResults<N> getShortestPaths(Set<N> originNodes, Set<N> destinationNodes, double maxCost) {
-		Set<N> unfinishedOrigins = new HashSet<N>(originNodes);
+	public ShortestPathResults<N> getShortestPaths(Map<N,Set<N>> originsDestinations, double maxCost) {
+		Set<N> unfinishedOrigins = new HashSet<N>(originsDestinations.keySet());
 		ShortestPathResultsContainer<N> spResults = new BasicShortestPathResults<>();
 		for (int i = 0; i < network.nodeIndices.length; i++) {
-			if (originNodes.contains(network.nodeIndices[i])) {
-				spResults.addAll(getShortestPaths(i,destinationNodes,maxCost));
+			if (unfinishedOrigins.contains(network.nodeIndices[i])) {
+				spResults.addAll(getShortestPaths(i,originsDestinations.get(network.nodeIndices[i]),maxCost));
 				unfinishedOrigins.remove(network.nodeIndices[i]);
 			}
 		}
