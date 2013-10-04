@@ -18,6 +18,11 @@ public class Path<N extends Node> implements Iterable<N> {
 		this(null,first);
 	}
 	
+	public int getLength()
+	{
+	    return length;
+	}
+	
 	public N getNode(int index) {
 		if (index < 0 || index >= length)
 			throw new IllegalArgumentException("Invalid index for path of length " + length);
