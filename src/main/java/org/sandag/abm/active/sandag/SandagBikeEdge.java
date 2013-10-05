@@ -7,6 +7,7 @@ public class SandagBikeEdge extends SimpleEdge<SandagBikeNode>
     public volatile boolean centroidConnector, autosPermitted;
     public volatile float distance;
     public volatile short gain;
+    public volatile double cost;
     
     public SandagBikeEdge(SandagBikeNode fromNode, SandagBikeNode toNode) 
     {
