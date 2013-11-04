@@ -36,4 +36,8 @@ public class NodePair<N extends Node> implements Comparable<NodePair<N>>{
 	public int hashCode() {
 		return Objects.hash(fromNode,toNode);
 	}
+	
+	public String toString() {
+		return "<od pair: " + fromNode + "," + toNode + ">";
+	}
 }

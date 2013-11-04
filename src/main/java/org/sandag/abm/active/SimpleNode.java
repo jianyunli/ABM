@@ -35,5 +35,10 @@ public class SimpleNode implements Node
     		return false;
     	return id == ((Node) o).getId();
     }
+    
+    public String toString()
+    {
+    	return "<node: " + id + ">";
+    }
    
 }
