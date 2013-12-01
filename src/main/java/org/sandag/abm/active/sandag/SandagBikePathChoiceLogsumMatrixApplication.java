@@ -88,7 +88,7 @@ public class SandagBikePathChoiceLogsumMatrixApplication extends AbstractPathCho
             new File(configuration.getOutputDirectory()).mkdirs();
             
             Map<NodePair<SandagBikeNode>,double[]> logsums = application.calculateMarketSegmentLogsums();
-            Map<Integer,Integer> centroids = configuration.getInverseZonalCentroidIdMap();
+            Map<Integer,Integer> centroids = configuration.getInverseOriginZonalCentroidIdMap();
             
             try
             {
