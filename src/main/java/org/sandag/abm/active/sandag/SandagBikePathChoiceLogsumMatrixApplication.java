@@ -12,6 +12,7 @@ import org.sandag.abm.active.PathAlternativeListGenerationConfiguration;
 import org.sandag.abm.application.SandagModelStructure;
 import org.sandag.abm.ctramp.Person;
 import org.sandag.abm.ctramp.Tour;
+import java.text.DecimalFormat;
 
 public class SandagBikePathChoiceLogsumMatrixApplication extends AbstractPathChoiceLogsumMatrixApplication<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal>
 {
@@ -80,9 +81,11 @@ public class SandagBikePathChoiceLogsumMatrixApplication extends AbstractPathCho
         configurations.add(new SandagBikeMgraPathAlternativeListGenerationConfiguration(propertyMap, network));
         String[] fileProperties = new String[] {"active.logsum.matrix.file.bike.taz", "active.logsum.matrix.file.bike.mgra"};
 
+        DecimalFormat formatter = new DecimalFormat("#.###");
+        
         for(int i=0; i<configurations.size(); i++)  {
             PathAlternativeListGenerationConfiguration<SandagBikeNode, SandagBikeEdge, SandagBikeTraversal> configuration  = configurations.get(i);
-            String filename = propertyMap.get(configuration.getOutputDirectory() + fileProperties[i]);
+            String filename = configuration.getOutputDirectory() + "/" + propertyMap.get(fileProperties[i]);
             application = new SandagBikePathChoiceLogsumMatrixApplication(configuration,propertyMap);
             
             new File(configuration.getOutputDirectory()).mkdirs();
@@ -95,7 +98,12 @@ public class SandagBikePathChoiceLogsumMatrixApplication extends AbstractPathCho
                 FileWriter writer = new FileWriter(new File(filename));
                 writer.write("i, j, " + Arrays.toString(MARKET_SEGMENT_NAMES).substring(1).replaceFirst("]", "") + "\n");
                 for (NodePair<SandagBikeNode> od : logsums.keySet()) {
-                    writer.write(centroids.get(od.getFromNode().getId()) + ", " + centroids.get(od.getToNode().getId()) + ", " + Arrays.toString(logsums.get(od)).substring(1).replaceFirst("]", "") + "\n" );
+                    double[] values = logsums.get(od); 
+                    writer.write(centroids.get(od.getFromNode().getId()) + ", " + centroids.get(od.getToNode().getId()));
+                    for (double v : values) {
+                        writer.write(", " + formatter.format(v));
+                    }
+                    writer.write("\n");
                 }
                 writer.flush();
                 writer.close();  
