@@ -69,8 +69,12 @@ public class SandagBikePathChoiceModel {
 		
 	}
 	
-	public double getPathLogsums(Person person, SandagBikePathAlternatives paths, boolean inboundTrip, Tour tour) {
+	public double getPathLogsums(Person person, SandagBikePathAlternatives paths, boolean inboundTrip, Tour tour, boolean debug) {
 		applyPathChoiceModel(person,paths,inboundTrip,tour);
+		if (debug) {
+		    model.get().logUECResults(logger);
+		    logger.info("logsum: " + model.get().getLogsum());
+		}
 		return model.get().getLogsum();
 	}
 

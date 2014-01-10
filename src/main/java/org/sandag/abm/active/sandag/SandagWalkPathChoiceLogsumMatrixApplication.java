@@ -19,6 +19,8 @@ public class SandagWalkPathChoiceLogsumMatrixApplication extends AbstractPathCho
     
     private PathAlternativeListGenerationConfiguration<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal> configuration;
     
+    private static final double MINUTES_PER_MILE = 20.0;
+    
     public SandagWalkPathChoiceLogsumMatrixApplication(PathAlternativeListGenerationConfiguration<SandagBikeNode,SandagBikeEdge,SandagBikeTraversal> configuration)
     {
         super(configuration);
@@ -32,16 +34,17 @@ public class SandagWalkPathChoiceLogsumMatrixApplication extends AbstractPathCho
             throw new UnsupportedOperationException("Walk logsums cannot be calculated for alternative lists containing multiple paths");
         }
         
-        double utility = 0;
+        double utility = 0, distance = 0;
         SandagBikeNode parent = null;
         for (SandagBikeNode n : alternativeList.get(0)) {
             if ( parent != null ) {
                 utility -= configuration.getNetwork().getEdge(parent,n).walkCost;
+                distance += configuration.getNetwork().getEdge(parent,n).distance;
             }
             parent = n;
         }
 
-        return new double[] {-utility};    
+        return new double[] {-utility, distance * MINUTES_PER_MILE};    
     }
     
     public static void main(String ... args) {
@@ -107,7 +110,7 @@ public class SandagWalkPathChoiceLogsumMatrixApplication extends AbstractPathCho
         try
         {
             FileWriter writer = new FileWriter(new File(filename));
-            writer.write("i, j, value\n");
+            writer.write("i, j, perceived, actual\n");
             for (NodePair<SandagBikeNode> od : allMatrices.get(0).keySet()) {
                 double[] values = allMatrices.get(0).get(od);
                 writer.write(originCentroids.get(od.getFromNode().getId()) + ", " + destinationCentroids.get(od.getToNode().getId()));
@@ -131,7 +134,7 @@ public class SandagWalkPathChoiceLogsumMatrixApplication extends AbstractPathCho
         try
         {
             FileWriter writer = new FileWriter(new File(filename));
-            writer.write("mgra, tap, boarding, alighting\n");
+            writer.write("mgra, tap, onPerceived, onActual, offPerceived, offActual\n");
             for (NodePair<SandagBikeNode> od : allMatrices.get(1).keySet()) {
                 NodePair<SandagBikeNode> doPair = new NodePair<>(od.getToNode(), od.getFromNode());
                 double[] mgraTapValues = allMatrices.get(1).get(od);
