@@ -2,6 +2,7 @@ package org.sandag.abm.internalexternal;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.sandag.abm.accessibilities.AutoAndNonMotorizedSkimsCalculator;
@@ -103,7 +104,8 @@ public class McLogsumsCalculator
     private WalkTransitWalkSkimsCalculator     wtw;
     private WalkTransitDriveSkimsCalculator    wtd;
     private DriveTransitWalkSkimsCalculator    dtw;
-    private BikeLogsum                         bls;
+    
+    private Map<String,String> rbMapForBikeLogsum;
 
     private int                                setTourMcLogsumDmuAttributesTotalTime = 0;
     private int                                setTripMcLogsumDmuAttributesTotalTime = 0;
@@ -136,7 +138,7 @@ public class McLogsumsCalculator
         wtd.setup(rbMap, wtdSkimLogger, bestPathUEC);
         dtw = new DriveTransitWalkSkimsCalculator();
         dtw.setup(rbMap, dtwSkimLogger, bestPathUEC);
-        bls = BikeLogsum.getBikeLogsum(rbMap);
+        rbMapForBikeLogsum = rbMap;
     }
 
     public void setTazDistanceSkimArrays(double[][][] storedFromTazDistanceSkims,
@@ -186,7 +188,7 @@ public class McLogsumsCalculator
 
         setNmTripMcDmuAttributes(mcDmuObject, origMgra, destMgra, departPeriod, debug);
          
-         mcDmuObject.setBikeLogsum(bls.getLogsum(new BikeLogsumSegment(tour.getFemale() == 1,false,trip.isInbound()),origMgra,destMgra));
+         mcDmuObject.setBikeLogsum(BikeLogsum.getLogsumStatic(rbMapForBikeLogsum,new BikeLogsumSegment(tour.getFemale() == 1,false,trip.isInbound()),origMgra,destMgra));
 
         int[][] bestTapPairs = null;
 
@@ -208,7 +210,7 @@ public class McLogsumsCalculator
 
         setDtwTripMcDmuAttributes(mcDmuObject, origMgra, destMgra, departPeriod, null, debug);
 
-        mcDmuObject.setBikeLogsum(bls.getLogsum(new BikeLogsumSegment(tour.getFemale() == 1,false,trip.isInbound()),origMgra,origMgra));
+        mcDmuObject.setBikeLogsum(BikeLogsum.getLogsumStatic(rbMapForBikeLogsum,new BikeLogsumSegment(tour.getFemale() == 1,false,trip.isInbound()),origMgra,origMgra));
     }
 
     private void setNmTripMcDmuAttributes(InternalExternalTripModeChoiceDMU tripMcDmuObject,

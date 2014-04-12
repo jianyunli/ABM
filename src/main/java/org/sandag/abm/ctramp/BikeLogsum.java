@@ -3,8 +3,6 @@ package org.sandag.abm.ctramp;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,8 +24,7 @@ import com.pb.common.util.ResourceUtil;
  * by -1 to avoid conflicts. To ensure good performance when building the object, a good guess as to the number of node pairs (maz pairs plus taz pairs)
  * can be provided (a default value of 26 million will be used otherwise) via the {@code BIKE_LOGSUM_NODE_PAIR_COUNT_PROPERTY} property.
  */
-public class BikeLogsum implements SegmentedSparseMatrix<BikeLogsumSegment>,Serializable {
-	private static final long serialVersionUID = 660793106399818667L;
+public class BikeLogsum implements SegmentedSparseMatrix<BikeLogsumSegment> {
 	private static Logger logger = Logger.getLogger(BikeLogsum.class);
 	
 	public static final String BIKE_LOGSUM_OUTPUT_PROPERTY = "active.output.bike";
@@ -198,8 +195,19 @@ public class BikeLogsum implements SegmentedSparseMatrix<BikeLogsumSegment>,Seri
 		return logsums == null ? Double.POSITIVE_INFINITY : logsums[segment.getSegmentId()+BikeLogsumSegment.segmentWidth()];
 	}
 	
-	private static class MatrixLookup implements Serializable {
-		private static final long serialVersionUID = -5048040835197200584L;
+	public static double getValueStatic(Map<String,String> rbMap, BikeLogsumSegment segment, int rowId, int columnId) {
+		return getBikeLogsum(rbMap).getValue(segment,rowId,columnId);
+	}
+	
+	public static double getLogsumStatic(Map<String,String> rbMap, BikeLogsumSegment segment, int rowId, int columnId) {
+		return getBikeLogsum(rbMap).getLogsum(segment,rowId,columnId);
+	}
+	
+	public static double getTimeStatic(Map<String,String> rbMap, BikeLogsumSegment segment, int rowId, int columnId) {
+		return getBikeLogsum(rbMap).getTime(segment,rowId,columnId);
+	}
+	
+	private static class MatrixLookup {
 		private final int row;
 		private final int column;
 		
@@ -218,27 +226,6 @@ public class BikeLogsum implements SegmentedSparseMatrix<BikeLogsumSegment>,Seri
 		public int hashCode() {
 			return row + 37*column;
 		}
-	}
-	
-	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-		out.writeObject(logsum);
-		out.writeObject(mgraIndex);
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-		logsum = (Map<MatrixLookup,double[]>) in.readObject();
-		mgraIndex = (int[]) in.readObject();
-		synchronized (BikeLogsum.class) {
-			//ensures singleton - readResolve will ensure all get this single value
-			//we need to allow the above reading of fields, though, so that deserialization is aligned correctly
-			if (instance == null) 
-				instance = this;
-		}
-	}
-	
-	private Object readResolve() throws ObjectStreamException {
-		return instance; //ensures singelton
 	}
 	
 	public static void main(String ... args) {

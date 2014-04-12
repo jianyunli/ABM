@@ -1,10 +1,11 @@
 package org.sandag.abm.application;
 
 import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 import org.sandag.abm.ctramp.ModelStructure;
 import org.sandag.abm.ctramp.TourModeChoiceDMU;
-
 import org.sandag.abm.ctramp.BikeLogsum;
 import org.sandag.abm.ctramp.BikeLogsumSegment;
 import org.sandag.abm.ctramp.Household;
@@ -19,13 +20,14 @@ public class SandagTourModeChoiceDMU
 {
     
 	private int setPersonHhTourCounter = 0;
-	private BikeLogsum bls;
     protected double inboundFemaleBikeLogsum;
     protected double outboundFemaleBikeLogsum;
     protected double inboundMaleBikeLogsum;
     protected double outboundMaleBikeLogsum;
     protected double femaleInParty;
     protected double maleInParty;
+    
+    private Map<String,String> rbMapForBikeLogsum;
 
     public SandagTourModeChoiceDMU(ModelStructure modelStructure, Logger aLogger)
     {
@@ -139,9 +141,9 @@ public class SandagTourModeChoiceDMU
     }
     
     
-    public void setBikeLogsum(BikeLogsum bls) 
+    public void setRbMapForBikeLogsum(Map<String,String> rbMapForBikeLogsum) 
     {
-    	this.bls = bls;
+    	this.rbMapForBikeLogsum = rbMapForBikeLogsum;
     }
     
     public void setPersonObject(Person person) 
@@ -233,6 +235,7 @@ public class SandagTourModeChoiceDMU
 		int origin = tour.getTourOrigMgra();
 		int dest = tour.getTourDestMgra();
 		boolean mandatory = tour.getTourPrimaryPurposeIndex() <= 3;
+		BikeLogsum bls = BikeLogsum.getBikeLogsum(rbMapForBikeLogsum);
 		setBikeLogsum(bls.getLogsum(new BikeLogsumSegment(true,mandatory,true),dest,origin),
 				      bls.getLogsum(new BikeLogsumSegment(true,mandatory,false),origin,dest),
 				      bls.getLogsum(new BikeLogsumSegment(false,mandatory,true),dest,origin),

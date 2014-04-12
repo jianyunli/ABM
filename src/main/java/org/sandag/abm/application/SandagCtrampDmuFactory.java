@@ -104,7 +104,7 @@ public class SandagCtrampDmuFactory
     public TourModeChoiceDMU getModeChoiceDMU()
     {
         SandagTourModeChoiceDMU dmu = new SandagTourModeChoiceDMU(modelStructure,null);
-        dmu.setBikeLogsum(BikeLogsum.getBikeLogsum(propertyMap));
+        dmu.setRbMapForBikeLogsum(propertyMap);
         return dmu;
     }
 
@@ -146,7 +146,7 @@ public class SandagCtrampDmuFactory
     public TripModeChoiceDMU getTripModeChoiceDMU()
     {
         SandagTripModeChoiceDMU dmu = new SandagTripModeChoiceDMU(modelStructure,null);
-        dmu.setBikeLogsum(BikeLogsum.getBikeLogsum(propertyMap));
+        dmu.setRbMapForBikeLogsum(propertyMap);
         return dmu;
     }
 

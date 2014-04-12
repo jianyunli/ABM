@@ -121,8 +121,8 @@ public final class MgraDataManager
     //first element of distance array is percieved distance,
     // the second is actual distance
     private HashMap<Integer,int[]>[] dMgraWalkDistance;
-    
-    private BikeLogsum bls;
+
+    private Map<String,String> rbMapForBikeLogsum;
     //segment doesn't matter as it is now just a passthrough
     private BikeLogsumSegment defaultSegment = new BikeLogsumSegment(true,true,true);
 
@@ -168,7 +168,7 @@ public final class MgraDataManager
         readMgraTableData(rbMap);
         readMgraWlkTaps(rbMap);
         readMgraWlkDist(rbMap);
-        bls = BikeLogsum.getBikeLogsum(rbMap);
+        rbMapForBikeLogsum = rbMap;
 
         // pre-process the list of TAPS reachable by drive access for each MGRA
         mapDriveAccessTapsToMgras(TazDataManager.getInstance(rbMap));
@@ -578,7 +578,7 @@ public final class MgraDataManager
      */
     public float getMgraToMgraBikeTime(int oMgra, int dMgra)
     {
-    	double time = bls.getTime(defaultSegment,oMgra,dMgra);
+    	double time = BikeLogsum.getTimeStatic(rbMapForBikeLogsum,defaultSegment,oMgra,dMgra);
     	return (time == Double.POSITIVE_INFINITY) ? 0f : (float) time;
     }
 
