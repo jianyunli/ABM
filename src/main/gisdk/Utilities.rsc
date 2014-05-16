@@ -9,10 +9,21 @@ Macro "CloseAll"
     if ArrayLength(map_arr)>0 then do
         open_maps=ArrayLength(map_arr[1])
         for mm=1 to open_maps do
+            SetMapSaveFlag(map_arr[1][mm],"False")
             CloseMap(map_arr[1][mm])
         end
     end
-
+    
+    RunMacro("G30 File Close All")
+    
+    mtx_arr=GetMatrices()
+    if ArrayLength(mtx_arr) > 0 then do
+        handle_arr = mtx_arr[1]
+        for k = 1 to handle_arr.length do
+            handle_arr[k] = null
+        end
+    end
+    
     On NotFound goto no_more_eds
     still_more_eds:
     CloseEditor()
@@ -30,7 +41,7 @@ Macro "CloseAll"
             cont_views:
         end
     end
-endMacro
+EndMacro
 
 Macro "IsMapOpen" (map)
     maps = GetMapNames()

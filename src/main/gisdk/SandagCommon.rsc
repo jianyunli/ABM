@@ -2,7 +2,6 @@
 //****************************************************************
 //Common Macros
 //
-//read properties
 //Export Matrix to CSV
 //Export Matrix
 //Matrix Size
@@ -10,7 +9,6 @@
 //Aggregate Matrices
 //Go GetMatrixCoreNames
 //Get SL Query #
-//close all
 //CloseViews
 //date and time
 //SDdeletefile
@@ -21,47 +19,12 @@
 //ForecastYearInt
 //DeleteInterimFiles
 //FileCheckDelete
+//GetPathDirectory
+//Run Program
 //****************************************************************
 //****************************************************************
 
-Macro "read properties"(file,key,ctype)
-  //ctype as string - Character Type - Valid "I" or anything else
-  //macro only reads integers and strings
-  //reads property as string and returns either an integer or a string
-  
-  shared path, path_study
-
-// Get file name
-  dif2=GetDirectoryInfo(path+"\\"+file, "file")     
-  if dif2.length>0  then do //use scenario file
-    fptr=openfile(path+"\\"+file,"r")               
-  end    
-  else do //use study file from data directory
-    fptr=openfile(path_study+"\\data\\"+file,"r")   
-  end
-                                                          
-// Search key in properties file                       
-  a = ReadArray(fptr)                                           
-  for k=1 to a.length do   
-    // search for the key (line number is stored as k value)                                   
-    pos1 = position(a[k],key)                              
-    if pos1 =1 then do 
-     // gets the integer on the rightside of "=" 
-      keyword=ParseString(a[k], "=")
-      keyvaltrim=trim(keyword[2])
-       if ctype = "I" then do  // integer
-        keyval=S2I(keyvaltrim)
-      end
-      else do  // if not I then it's a string
-        keyval = keyvaltrim   // gets the string on the rightside of "=" 
-      end
-    end                                                   
-  end 
-  CloseFile(fptr)  
-  Return(keyval)
-EndMacro
-
-Macro "Export Matrix to CSV" (path,filename,corename,filenameout)
+Macro "ExportMatrixToCSV" (path,filename,corename,filenameout)
     m = OpenMatrix(path+"\\"+filename, "True")
     mc = CreateMatrixCurrency(m,corename,,,)
     rows = GetMatrixRowLabels(mc)
@@ -69,7 +32,7 @@ Macro "Export Matrix to CSV" (path,filename,corename,filenameout)
     return(1)
 EndMacro
 
-Macro "Export Matrix" (path,filename,corename,filenameout,outputtype)
+Macro "ExportMatrix" (path,filename,corename,filenameout,outputtype)
     //path as string - path="T:\\transnet2\\devel\\sr12\\sr12_byear\\byear"
     //filename as string - must be a matrix - filename="SLAgg.mtx"
     //corename as string - corename="DAN"
@@ -83,7 +46,7 @@ Macro "Export Matrix" (path,filename,corename,filenameout,outputtype)
     return(1)
 EndMacro
 
-Macro "Matrix Size" (path, filename, corename)
+Macro "MatrixSize" (path, filename, corename)
   //gets the size (number of zones) in the matrix - useful for sr11 vs sr12 and for split zones
   m = OpenMatrix(path+"\\"+filename, "True")
   base_indicies = GetMatrixBaseIndex(m)
@@ -93,7 +56,7 @@ Macro "Matrix Size" (path, filename, corename)
   return(vcount)
 EndMacro
 
-Macro "Create Matrix" (path, filename, label, corenames, zone)
+Macro "CreateMatrix" (path, filename, label, corenames, zone)
   Opts = null
   Opts.[File Name] = (path+"\\"+filename)
   Opts.Label = label
@@ -106,7 +69,7 @@ Macro "Create Matrix" (path, filename, label, corenames, zone)
   return(1)
 EndMacro
 
-Macro "Aggregate Matrices" (path, xref, xrefcol1, xrefcol2, mtx, corenm, aggmtx)
+Macro "AggregateMatrices" (path, xref, xrefcol1, xrefcol2, mtx, corenm, aggmtx)
   // Aggregate Matrix Options
   m = OpenMatrix(path+"\\"+mtx, "True")
   base_indicies = GetMatrixBaseIndex(m)
@@ -123,13 +86,13 @@ Macro "Aggregate Matrices" (path, xref, xrefcol1, xrefcol2, mtx, corenm, aggmtx)
   return(ok)
 EndMacro
 
-Macro "Go GetMatrixCoreNames" (path, matrix)
+Macro "GoGetMatrixCoreNames" (path, matrix)
   m = OpenMatrix(path+"\\"+matrix, )
   core_names=GetMatrixCoreNames(m)
   return(core_names)
 EndMacro
 
-Macro "Get SL Query #" (path)
+Macro "GetSLQuery #" (path)
   //Modified from "Prepare queries for select link analysis, by JXu on Nov 29, 2006"
   selinkqry_file="\\selectlink_query.txt"
   fptr_from = OpenFile(path + selinkqry_file, "r")
@@ -148,30 +111,6 @@ Macro "Get SL Query #" (path)
   return(query)
 EndMacro
 
-Macro "close all"
-  maps = GetMaps()
-  if maps <> null then do
-    for k = 1 to maps[1].length do
-      SetMapSaveFlag(maps[1][k],"False")
-    end
-  end
-  RunMacro("G30 File Close All")
-  mtxs = GetMatrices()
-  if mtxs <> null then do
-    handles = mtxs[1]
-    for k = 1 to handles.length do
-      handles[k] = null
-    end
-  end
-  views = GetViews()
-  if views <> null then do
-    handles = views[1]
-    for k = 1 to handles.length do
-      handles[k] = null
-    end
-  end
-EndMacro
-
 Macro "CloseViews" 
     vws = GetViewNames()
     for i = 1 to vws.length do
@@ -180,7 +119,7 @@ Macro "CloseViews"
 EndMacro
 
 // returns a nicely formatted day and time
-Macro "date and time"
+Macro "DateAndTime"
   date_arr = ParseString(GetDateAndTime(), " ")
   day = date_arr[1]
   mth = date_arr[2]
@@ -192,16 +131,7 @@ Macro "date and time"
   Return(today)
 EndMacro
 
-Macro "SDdeletefile"(arr)
-  file=arr[1]
-  dif2=GetDirectoryInfo(file,"file") 
-  if dif2.length>0 then deletefile(file) 
-  ok=1
-  quit:
-    return(ok) 
-EndMacro
-
-Macro "SDcopyfile"(arr)
+Macro "SafeCopyFile"(arr)
   file1=arr[1]
   file2=arr[2]
   dif2=GetDirectoryInfo(file2,"file") 
@@ -213,7 +143,7 @@ Macro "SDcopyfile"(arr)
     return(ok)
 EndMacro
 
-Macro "SDrenamefile"(arr)
+Macro "SafeRenameFile"(arr)
   file1=arr[1]
   file2=arr[2]
   dif1=GetDirectoryInfo(file2,"file") 
@@ -259,9 +189,9 @@ Macro "ForecastYearInt"
 EndMacro
 
 Macro "DeleteInterimFiles" (path, FileNameArray,RscName,MacroName,FileDescription)
-  RunMacro("HwycadLog",{RscName+": "+MacroName,"SDdeletefile, "+FileDescription})
+  RunMacro("HwycadLog",{RscName+": "+MacroName,"SafeDeleteFile, "+FileDescription})
   for i = 1 to FileNameArray.length do //delete existing files
-    ok=RunMacro("SDdeletefile",{path+"\\"+FileNameArray[i]}) if !ok then goto quit
+    ok=RunMacro("SafeDeleteFile",path+"\\"+FileNameArray[i]) if !ok then goto quit
   end
   quit:
     return(ok)
@@ -329,12 +259,10 @@ EndMacro
 *
 ***********************************************************************************************************************************/
 
-Macro "Run Program" (scenarioDirectory, executableString, controlString)
-
-
-				//drive letter
-				path = SplitPath(scenarioDirectory)
-				
+Macro "RunProgram" (scenarioDirectory, executableString, controlString)
+        //drive letter
+        path = SplitPath(scenarioDirectory)
+        
         //open the batch file to run
         fileString = scenarioDirectory+"\\programs\\source.bat"
         ptr = OpenFile(fileString, "w")
