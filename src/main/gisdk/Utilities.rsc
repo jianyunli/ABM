@@ -1,3 +1,40 @@
+//****************************************************************
+//****************************************************************
+//Utilities Macros
+//
+//ModifyOptionsOption
+//CloseAll
+//IsMapOpen
+//IsViewOpen
+//SafeDeleteFile
+//DeleteFiles
+//SafeDeleteFiles
+//SafeDeleteDatabase
+//NormalizePath
+//FormPath
+//CreateMapForDatabase
+//OpenDatabaseInMap
+//OpenDatabase
+//OpenRouteSystemInMap
+//OpenRouteSystem
+//CleanRecordValuesOptionsArray
+//FormFieldSpec
+//ToString
+//GetArrayIndex
+//ArraysEqual
+//GetDatabaseColumns
+//ChooseFileName
+//RunProgram
+//AddElementToSortedArraySet
+//ClearAndDeleteDirectory
+//ReadPropertiesFile
+//DetokenizePropertyValues
+//ComputeAreaBufferOverlayPercentages
+//ExportBintoCSV
+//ComputeAreaOverlayPercentages
+//****************************************************************
+//****************************************************************
+
 Macro "ModifyOptionsOption" (options_array,option_key,key,value)
     spec = options_array.(option_key)
     spec.(key) = value
@@ -577,7 +614,7 @@ EndMacro
 
 //****************************************************************
 //****************************************************************
-//Old SandagCommon Macros
+//SandagCommon Macros
 //
 //ExportMatrixToCSV
 //ExportMatrix
@@ -596,7 +633,6 @@ EndMacro
 //DeleteInterimFiles
 //FileCheckDelete
 //GetPathDirectory
-//RunProgram
 //****************************************************************
 //****************************************************************
 
@@ -827,43 +863,6 @@ Macro "GetPathDirectory"
       msg3=" or use the Browse button to select a different study area."
       showMessage(msg1+msg2+path_study+msg3)
     end
-EndMacro
-/***********************************************************************************************************************************
-*
-* Run Program
-* Runs the program for a set of control files 
-*
-***********************************************************************************************************************************/
-
-Macro "RunProgram" (scenarioDirectory, executableString, controlString)
-        //drive letter
-        path = SplitPath(scenarioDirectory)
-        
-        //open the batch file to run
-        fileString = scenarioDirectory+"\\programs\\source.bat"
-        ptr = OpenFile(fileString, "w")
-        WriteLine(ptr,path[1])
-        WriteLine(ptr,"cd "+scenarioDirectory )
-    
-        runString = "call "+executableString + " " + controlString
-        WriteLine(ptr,runString)
-        
-        //write the return code check
-        failString = "IF NOT ERRORLEVEL = 0 ECHO "+controlString+" > failed.txt"
-        WriteLine(ptr,failString) 
-        
-        CloseFile(ptr)
-        status = RunProgram(fileString, {{"Minimize", "True"}})
-       
-        info = GetFileInfo(scenarioDirectory+"\\failed.txt")
-        if(info != null) then do
-            ret_value=0
-            goto quit
-        end
-
-    Return(1)
-    quit:
-    	Return( RunMacro("TCB Closing", ret_value, True ) )
 EndMacro
 
 
