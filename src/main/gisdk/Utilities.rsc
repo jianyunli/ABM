@@ -102,12 +102,15 @@ EndMacro
 
 Macro "SafeDeleteFile" (file)
     //just ignores any errors
+    On Error goto safe_delete_error
     if GetFileInfo(file) <> null then do
-        On Error goto safe_delete_error
         DeleteFile(file)
-        safe_delete_error:
-        On Error default
     end
+    safe_delete_error:
+        On Error default
+    ok=1
+    quit:
+        return(ok) 
 EndMacro
 
 Macro "DeleteFiles" (path)
