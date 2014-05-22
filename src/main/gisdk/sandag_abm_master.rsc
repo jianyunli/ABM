@@ -11,7 +11,10 @@ Macro "Run SANDAG ABM"
    sample_rate = { 0.2, 0.5, 1.0 }
    max_iterations=sample_rate.length    //number of feedback loops
   
-   path = "${workpath}\\${year}"
+   // set path if not given by dbox.rsc
+   if path == null then do
+      path = "${workpath}\\${year}"
+   end
 
    RunMacro("HwycadLog",{"sandag_abm_master.rsc:","*********Model Run Starting************"})
       
