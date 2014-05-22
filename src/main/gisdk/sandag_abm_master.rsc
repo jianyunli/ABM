@@ -2,7 +2,7 @@ Macro "Run SANDAG ABM"
   
    RunMacro("TCB Init")
 
-   shared path, inputDir, outputDir, inputTruckDir, mxzone, mxtap, mxext,mxlink,mxrte
+   shared path, inputDir, outputDir, inputTruckDir, mxzone, mxtap, mgraDataFile,mxext,mxlink,mxrte
  
    // Stop residual Java processes on nodes
    runString = path+"\\bin\\stopABM.cmd"
@@ -240,7 +240,7 @@ Macro "Run SANDAG ABM"
 	   if !ok then goto quit
 	
 	   // export core ABM data
-	   runString = path+"\\bin\\DataExporter.bat"
+	   runString = path+"\\bin\\DataExporter.bat "+drive+" "+path_no_drive
 	   ok = RunMacro("TCB Run Command", 1, "Export core ABM data", runString)
 	   if !ok then goto quit 
    end

@@ -21,20 +21,12 @@ Macro "ExportSandagData"
     input_stop_file = inputDir + "\\trstop"
     output_stop_file = reportDir + "\\trstop"
 
-    input_hwyload_file = outputDir + "\\hwyload_sel_AM.bin"
-    if GetFileInfo(input_hwyload_file) = null then do
-       input_hwyload_file = RunMacro("FormPath",{outputDir,"hwyload_"})
-    end
-    else do
-       input_hwyload_file = RunMacro("FormPath",{outputDir,"hwyload_sel_"})
-    end
+    input_hwyload_file = RunMacro("FormPath",{outputDir,"hwyload_"})
+  
     output_hwyload_file = RunMacro("FormPath",{reportDir,"hwyload_"})
 
     external_zones = {"1","2","3","4","5","6","7","8","9","10","11","12"}
-/*
-    trn_sellink_file = outputDir+"\\trn_sellinkWLK_LRT_EA.mtx"
-    if GetFileInfo(trn_sellink_file) <> null then RunMacro("Sum Up Select Link Transit Trips") 	
-*/
+
     RunMacro("ExportNetworkToCsv",network_file,output_network_file)   
     RunMacro("ExportHwyloadtoCSV",input_hwyload_file,output_hwyload_file)    
 
