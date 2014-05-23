@@ -2,7 +2,7 @@ Macro "Run SANDAG ABM"
   
    RunMacro("TCB Init")
 
-   shared path, inputDir, outputDir, inputTruckDir, mxzone, mxtap, mgraDataFile,mxext,mxlink,mxrte
+   shared path, inputDir, outputDir, inputTruckDir, mxzone, mxtap, mxext, mxlink, mxrte, mgraDataFile
  
    // Stop residual Java processes on nodes
    runString = path+"\\bin\\stopABM.cmd"
@@ -34,6 +34,10 @@ Macro "Run SANDAG ABM"
 
    // read properties from sandag_abm.properties in /conf folder
    properties = "\\conf\\sandag_abm.properties"   
+   
+   // same as mgra.socec.file, but no "input\" which is used in java
+   mgraDataFile = RunMacro("read properties",properties,"RunModel.mgraDataFile", "S")
+   
    skipCopyWarmupTripTables = RunMacro("read properties",properties,"RunModel.skipCopyWarmupTripTables", "S")
    skipBuildHwyNetwork = RunMacro("read properties",properties,"RunModel.skipBuildHwyNetwork", "S")
    skipBuildTransitNetwork= RunMacro("read properties",properties,"RunModel.skipBuildTransitNetwork", "S")

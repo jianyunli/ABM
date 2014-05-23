@@ -122,7 +122,7 @@ EndMacro
 Produces standard truck trips 
  
 Inputs:
-   input\mgra13_based_input2010.csv
+   input\mgra13_based_inputYYYY.csv
    input\TruckTripRates.csv
    output\hhByTaz.csv.csv
    output\empByTaz.csv.csv
@@ -329,7 +329,7 @@ Creates households by taz and employment by taz files to use in the truck trip g
  
 Inputs:
    sandag.properties
-   input\mgra13_based_input${year}.csv
+   input\mgra13_based_inputYYYY.csv
 
 Outputs:
    output\empByTaz.csv
@@ -337,12 +337,11 @@ Outputs:
     
 **********************************************************************************************************/
 Macro "Create hh and emp by taz"
-    shared path, inputDir, outputDir, mxzone      
-    mgraDataFile      = "mgra13_based_input${year}.csv"
+    shared path, inputDir, outputDir, mxzone, mgraDataFile     
     empbytaz          = "empByTaz.csv"
     hhbytaz           = "hhByTaz.csv"
     
-    RunMacro("SDcopyfile",{inputDir+"\\"+mgraDataFile,outputDir+"\\"+mgraDataFile}) 
+    RunMacro("SDcopyfile",{inputDir+"\\+"mgraDataFile,outputDir+"\\"+mgraDataFile}) 
     mgraView = OpenTable("MGRA View", "CSV", {outputDir+"\\"+mgraDataFile}, {{"Shared", "True"}})
     
     // Get data fields into vectors    

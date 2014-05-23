@@ -5,7 +5,7 @@ Macro "US to SD External Trip Model"
   controlTotals = "externalInternalControlTotals.csv"
   
   controlTotalsView = OpenTable("Control Totals", "CSV", {inputDir+"\\"+controlTotals}, {{"Shared", "True"}})
-  mgraView = OpenTable("MGRA View", "CSV",{inputDir+"\\mgra13_based_input${year}.csv"}, {{"Shared", "True"}})
+  mgraView = OpenTable("MGRA View", "CSV",{inputDir+"\\+"mgraDataFile}, {{"Shared", "True"}})
   
   eaDanMatrix = OpenMatrix(outputDir+"\\"+"impdan_EA.mtx", )
   eaDanMC = CreateMatrixCurrencies(eaDanMatrix,,,) 
@@ -98,7 +98,7 @@ Macro "US to SD External Trip Model"
   
   // create mgra size vectrors
   
-  mgraView = OpenTable("MGRA View", "CSV", {inputDir+"\\mgra13_based_input${year}.csv"}, {{"Shared", "True"}})
+  mgraView = OpenTable("MGRA View", "CSV", {inputDir+"\\+"mgraDataFile}, {{"Shared", "True"}})
    
   mgra                            = GetDataVector(mgraView+"|", "mgra", {{"Sort Order", {{"mgra", "Ascending"}}}} )
   taz                             = GetDataVector(mgraView+"|", "TAZ", {{"Sort Order", {{"mgra", "Ascending"}}}} )
