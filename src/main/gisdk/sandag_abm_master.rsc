@@ -12,7 +12,7 @@ Macro "Run SANDAG ABM"
    max_iterations=sample_rate.length    //number of feedback loops
   
    // set path if not given by dbox.rsc
-   if path == null then do
+   if path = null then do
       path = "${workpath}\\${year}"
    end
 

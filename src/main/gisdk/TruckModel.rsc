@@ -341,7 +341,7 @@ Macro "Create hh and emp by taz"
     empbytaz          = "empByTaz.csv"
     hhbytaz           = "hhByTaz.csv"
     
-    RunMacro("SDcopyfile",{inputDir+"\\+"mgraDataFile,outputDir+"\\"+mgraDataFile}) 
+    RunMacro("SDcopyfile",{inputDir+"\\"+mgraDataFile,outputDir+"\\"+mgraDataFile}) 
     mgraView = OpenTable("MGRA View", "CSV", {outputDir+"\\"+mgraDataFile}, {{"Shared", "True"}})
     
     // Get data fields into vectors    

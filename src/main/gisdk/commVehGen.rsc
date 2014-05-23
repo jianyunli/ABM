@@ -46,7 +46,7 @@ Macro "Commercial Vehicle Generation"
    
        
    // read in the mgra data in CSV format
-   mgraView = OpenTable("MGRA View", "CSV", {inputDir+"\\+"mgraDataFile}, {{"Shared", "True"}})
+   mgraView = OpenTable("MGRA View", "CSV", {inputDir+"\\"+mgraDataFile}, {{"Shared", "True"}})
    
    mgra                            = GetDataVector(mgraView+"|", "mgra", {{"Sort Order", {{"mgra", "Ascending"}}}} )
    taz                             = GetDataVector(mgraView+"|", "TAZ", {{"Sort Order", {{"mgra", "Ascending"}}}} )
