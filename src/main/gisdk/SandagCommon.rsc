@@ -230,9 +230,9 @@ Macro "HwycadLog"(arr)
   fprlog=null
   log1=arr[1]
   log2=arr[2]
-  dif2=GetDirectoryInfo(path+"\\hwycadx.log","file")
-  if dif2.length>0 then fprlog=OpenFile(path+"\\hwycadx.log","a") 
-  else fprlog=OpenFile(path+"\\hwycadx.log","w")
+  dif2=GetDirectoryInfo(path+"\\logFiles\\hwycadx.log","file")
+  if dif2.length>0 then fprlog=OpenFile(path+"\\logFiles\\hwycadx.log","a") 
+  else fprlog=OpenFile(path+"\\logFiles\\hwycadx.log","w")
   mytime=GetDateAndTime() 
   writeline(fprlog,mytime+", "+log1+", "+log2)
   CloseFile(fprlog)
